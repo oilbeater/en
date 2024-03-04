@@ -198,17 +198,17 @@ footer:
       -
         enable: true
         id: busuanzi_value_site_pv
-        name: total site view
+        name: sv：
         unit: 
       -
         enable: true
         id: busuanzi_value_page_pv
-        name: total page view
+        name: pv：
         unit: 
       -
         enable: true
         id: busuanzi_value_site_uv
-        name: total visitor
+        name: uv：
         unit: 
 
 # 文章搜索
