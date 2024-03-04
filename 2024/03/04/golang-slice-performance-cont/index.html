@@ -79,13 +79,13 @@
     <div id="app">
       <div class="header">
   <div class="avatar">
-    <a href="/">
+    <a href="/en">
       <!-- 头像取消懒加载，添加no-lazy -->
       
         <img src="/images/oilbeater.png" alt="">
       
     </a>
-    <div class="nickname"><a href="/">Oilbeater</a></div>
+    <div class="nickname"><a href="/en">Oilbeater</a></div>
   </div>
   <div class="navbar">
     <ul>
@@ -165,7 +165,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2024-03-04 10:33:14
+          2024-03-04 10:36:08
         </span>
         
               <span class="post-tags">
@@ -195,7 +195,7 @@
 <li><a href="#bytebufferpool">bytebufferpool</a></li>
 <li><a href="#conclusion">Conclusion</a></li>
 </ul>
-<p>I previously wrote about <a href="https://oilbeater.com/2024/03/04/golang-slice-performance/">The Impact of Preallocating Slice Memory in Golang</a>, discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool on performance.</p>
+<p>I previously wrote about <a href="https://oilbeater.com/en/2024/03/04/golang-slice-performance/">The Impact of Preallocating Slice Memory in Golang</a>, discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool on performance.</p>
 <h1 id="Basic-Performance-Tests"><a href="#Basic-Performance-Tests" class="headerlink" title="Basic Performance Tests"></a>Basic Performance Tests</h1><p>The initial Benchmark code only considered whether the Slice was preallocated with space. The specific code is as follows:</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> prealloc_test</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;sync&quot;</span></span><br><span class="line">    <span class="string">&quot;testing&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> length = <span class="number">1024</span></span><br><span class="line"><span class="keyword">var</span> testtext = <span class="built_in">make</span>([]<span class="type">byte</span>, length, length)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkNoPreallocateByElement</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Don&#x27;t preallocate our initial slice</span></span><br><span class="line">        <span class="keyword">var</span> init []<span class="type">byte</span></span><br><span class="line">        <span class="keyword">for</span> j := <span class="number">0</span>; j &lt; length; j++ &#123;</span><br><span class="line">            init = <span class="built_in">append</span>(init, testtext[j])</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkPreallocateByElement</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Preallocate our initial slice</span></span><br><span class="line">        init := <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">0</span>, length)</span><br><span class="line">        <span class="keyword">for</span> j := <span class="number">0</span>; j &lt; length; j++ &#123;</span><br><span class="line">            init = <span class="built_in">append</span>(init, testtext[j])</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -262,7 +262,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2024-03-04 10:33:14
+              2024-03-04 10:36:08
             </span>
             
                   <span class="post-tags">
@@ -385,7 +385,7 @@
         
         <li>
           
-              <a title="rss" href="/atom.xml">
+              <a title="rss" href="/en/atom.xml">
                 <i class="iconfont icon-rss"></i>
               </a>
               
@@ -411,13 +411,13 @@
   
     <div class="footer-views">
       
-          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+          total site view<span id="busuanzi_value_site_pv"></span>
         
       
-          本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+          total page view<span id="busuanzi_value_page_pv"></span>
         
       
-          本站访客数<span id="busuanzi_value_site_uv"></span>人
+          total visitor<span id="busuanzi_value_site_uv"></span>
         
       
     </div>
