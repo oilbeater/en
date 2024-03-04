@@ -28,7 +28,7 @@ favicon:
 avatar:
   author_photo: /images/oilbeater.png
   author_nickname: Oilbeater
-  path: /
+  path: /en
 
 # Google 分析
 # https://analytics.google.com
@@ -175,7 +175,7 @@ footer:
     #   # 具体参照https://github.com/hexojs/hexo-generator-feed
       name: rss
       icon: rss
-      path: /atom.xml
+      path: /en/atom.xml
       content: true
 
   more:
@@ -198,18 +198,18 @@ footer:
       -
         enable: true
         id: busuanzi_value_site_pv
-        name: 本站总访问量
-        unit: 次
+        name: total site view
+        unit: 
       -
         enable: true
         id: busuanzi_value_page_pv
-        name: 本文总阅读量
-        unit: 次
+        name: total page view
+        unit: 
       -
         enable: true
         id: busuanzi_value_site_uv
-        name: 本站访客数
-        unit: 人
+        name: total visitor
+        unit: 
 
 # 文章搜索
 search:

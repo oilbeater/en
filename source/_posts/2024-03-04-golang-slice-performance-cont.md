@@ -11,7 +11,7 @@ tags: [performance, golang]
 - [bytebufferpool](#bytebufferpool)
 - [Conclusion](#conclusion)
 
-I previously wrote about [The Impact of Preallocating Slice Memory in Golang](https://oilbeater.com/2024/03/04/golang-slice-performance/), discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool on performance.
+I previously wrote about [The Impact of Preallocating Slice Memory in Golang](https://oilbeater.com/en/2024/03/04/golang-slice-performance/), discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool on performance.
 
 # Basic Performance Tests
 
