@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en" color-mode="light">
+
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="author" content="Oilbeater" />
+  <!-- Open Graph Description 简短摘要-->
+  
+  <!-- 用于搜索引擎的文章摘要 -->
+  
+  
+  
+  <title>
+    
+      The Impact of Preallocating Slice Memory in Golang (Continued) 
+      
+      
+      |
+    
+     Oilbeater&#39;s Study Room
+  </title>
+
+  
+    <link rel="apple-touch-icon" href="/images/oilbeater.png">
+    <link rel="icon" href="/images/oilbeater.png">
+  
+
+  <!-- Raleway-Font -->
+  <link href="https://fonts.googleapis.com/css?family=Raleway&display=swap" rel="stylesheet">
+
+  <!-- hexo site css -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <link rel="stylesheet" href="//at.alicdn.com/t/font_1886449_67xjft27j1l.css" />
+  <!-- 代码块风格 -->
+  
+
+  <!-- jquery3.3.1 -->
+  
+    <script defer type="text/javascript" src="/plugins/jquery.min.js"></script>
+  
+
+  <!-- fancybox -->
+  
+    <link href="/plugins/jquery.fancybox.min.css" rel="stylesheet">
+    <script defer type="text/javascript" src="/plugins/jquery.fancybox.min.js"></script>
+  
+  
+<script src="/en/js/fancybox.js"></script>
+
+
+  
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-31254339-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-31254339-1');
+    </script>
+  
+
+  
+    <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  <script>
+    var html = document.documentElement
+    const colorMode = localStorage.getItem('color-mode')
+    if (colorMode) {
+      document.documentElement.setAttribute('color-mode', colorMode)
+    }
+  </script>
+<meta name="generator" content="Hexo 7.1.1"></head>
+
+
+  <body>
+    <div id="app">
+      <div class="header">
+  <div class="avatar">
+    <a href="/">
+      <!-- 头像取消懒加载，添加no-lazy -->
+      
+        <img src="/images/oilbeater.png" alt="">
+      
+    </a>
+    <div class="nickname"><a href="/">Oilbeater</a></div>
+  </div>
+  <div class="navbar">
+    <ul>
+      
+        <li class="nav-item" data-path="/en/">
+          <a href="/en/">Home</a>
+        </li>
+      
+        <li class="nav-item" data-path="/en/archives/">
+          <a href="/en/archives/">Archives</a>
+        </li>
+      
+        <li class="nav-item" data-path="/en/tags/">
+          <a href="/en/tags/">Tags</a>
+        </li>
+      
+        <li class="nav-item" data-path="/en/about/">
+          <a href="/en/about/">About</a>
+        </li>
+      
+    </ul>
+  </div>
+</div>
+
+
+<script src="/en/js/activeNav.js"></script>
+
+
+
+      <div class="flex-container">
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/en/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">The Impact of Preallocating Slice Memory in Golang (Continued)</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2024-03-04 10:33:14
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/performance/" title="performance">
+                    #performance
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/golang/" title="golang">
+                    #golang
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <ul>
+<li><a href="#basic-performance-tests">Basic Performance Tests</a></li>
+<li><a href="#appending-an-entire-slice">Appending an Entire Slice</a></li>
+<li><a href="#reusing-slices">Reusing Slices</a></li>
+<li><a href="#syncpool">sync.Pool</a></li>
+<li><a href="#bytebufferpool">bytebufferpool</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+<p>I previously wrote about <a href="https://oilbeater.com/2024/03/04/golang-slice-performance/">The Impact of Preallocating Slice Memory in Golang</a>, discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool on performance.</p>
+<h1 id="Basic-Performance-Tests"><a href="#Basic-Performance-Tests" class="headerlink" title="Basic Performance Tests"></a>Basic Performance Tests</h1><p>The initial Benchmark code only considered whether the Slice was preallocated with space. The specific code is as follows:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> prealloc_test</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">    <span class="string">&quot;sync&quot;</span></span><br><span class="line">    <span class="string">&quot;testing&quot;</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> length = <span class="number">1024</span></span><br><span class="line"><span class="keyword">var</span> testtext = <span class="built_in">make</span>([]<span class="type">byte</span>, length, length)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkNoPreallocateByElement</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Don&#x27;t preallocate our initial slice</span></span><br><span class="line">        <span class="keyword">var</span> init []<span class="type">byte</span></span><br><span class="line">        <span class="keyword">for</span> j := <span class="number">0</span>; j &lt; length; j++ &#123;</span><br><span class="line">            init = <span class="built_in">append</span>(init, testtext[j])</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkPreallocateByElement</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Preallocate our initial slice</span></span><br><span class="line">        init := <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">0</span>, length)</span><br><span class="line">        <span class="keyword">for</span> j := <span class="number">0</span>; j &lt; length; j++ &#123;</span><br><span class="line">            init = <span class="built_in">append</span>(init, testtext[j])</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The test results are as follows:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">BenchmarkNoPreallocateByElement-12        569978              2151 ns/op            3320 B/op          9 allocs/op</span><br><span class="line">BenchmarkPreallocateByElement-12          804807              1304 ns/op            1024 B/op          1 allocs/op</span><br></pre></td></tr></table></figure>
+
+<p>It’s clear that not preallocating resulted in 8 additional memory allocations, and roughly, 40% of the time was spent on these extra 8 memory allocations.</p>
+<p>These two test cases use a loop to append elements one by one, but the performance gap is not evident when appending an entire Slice. Moreover, in these two test cases, we can’t determine the proportion of time consumed by memory allocation.</p>
+<h1 id="Appending-an-Entire-Slice"><a href="#Appending-an-Entire-Slice" class="headerlink" title="Appending an Entire Slice"></a>Appending an Entire Slice</h1><p>Therefore, two test cases for appending an entire Slice were added to observe whether preallocating memory still has a significant impact on performance. The new case code is as follows:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkNoPreallocate</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Don&#x27;t preallocate our initial slice</span></span><br><span class="line">        <span class="keyword">var</span> init []<span class="type">byte</span></span><br><span class="line">        init = <span class="built_in">append</span>(init, testtext...)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkPreallocate</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Preallocate our initial slice</span></span><br><span class="line">        init := <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">0</span>, length)</span><br><span class="line">        init = <span class="built_in">append</span>(init, testtext...)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The test results are as follows:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">BenchmarkNoPreallocateByElement-12        569978              2151 ns/op            3320 B/op          9 allocs/op</span><br><span class="line">BenchmarkPreallocateByElement-12          804807              1304 ns/op            1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkNoPreallocate-12                3829890               311.5 ns/op          1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkPreallocate-12                  3968048               306.7 ns/op          1024 B/op          1 allocs/op</span><br></pre></td></tr></table></figure>
+
+<p>Both cases only involved one memory allocation, with almost identical time consumption, significantly lower than appending elements one by one. On the one hand, appending an entire Slice knows the final size at the time of Slice expansion, eliminating the need for dynamic memory allocation and reducing overhead. On the other hand, appending an entire Slice involves block copying, reducing loop overhead and significantly improving performance.</p>
+<p>However, there is still one memory allocation in each case, and we cannot determine the proportion of time it consumes overall.</p>
+<h1 id="Reusing-Slices"><a href="#Reusing-Slices" class="headerlink" title="Reusing Slices"></a>Reusing Slices</h1><p>To calculate the cost of a single memory allocation, we designed a new test case, placing the Slice’s creation outside the loop and setting the Slice’s length to 0 at the end of</p>
+<p> each loop iteration for reuse. This way, only one memory allocation is made over many tests, which can be considered negligible. The specific code is as follows:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">BenchmarkPreallocate2</span><span class="params">(b *testing.B)</span></span> &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    init := <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">0</span>, length)</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Preallocate our initial slice</span></span><br><span class="line">        init = <span class="built_in">append</span>(init, testtext...)</span><br><span class="line">        init = init[:<span class="number">0</span>]</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The test results are as follows:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">BenchmarkNoPreallocateByElement-12        514904              2171 ns/op            3320 B/op          9 allocs/op</span><br><span class="line">BenchmarkPreallocateByElement-12          761772              1333 ns/op            1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkNoPreallocate-12                4041459               320.9 ns/op          1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkPreallocate-12                  3854649               320.1 ns/op          1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkPreallocate2-12                63147178                18.63 ns/op            0 B/op          0 allocs/op</span><br></pre></td></tr></table></figure>
+
+<p>This time, the test showed no memory allocation, and the overall time consumed dropped to 5% of the previous cases. Thus, we can roughly calculate that each memory allocation consumed 95% of the time in the previous test cases, a staggering proportion. Therefore, for performance-sensitive scenarios, it’s essential to reuse objects as much as possible to avoid the overhead of repeated object creation.</p>
+<h1 id="sync-Pool"><a href="#sync-Pool" class="headerlink" title="sync.Pool"></a>sync.Pool</h1><p>In simple scenarios, one can manually clear the Slice and reuse it within the loop, as in the previous test case. However, in real scenarios, object creation often occurs in various parts of the code, necessitating unified management and reuse. Golang’s <code>sync.Pool</code> serves this purpose, and its use is quite simple. However, its internal implementation is complex, with a lot of lock-free design for performance. For more details on its implementation, see <a target="_blank" rel="noopener" href="https://www.cyhone.com/articles/think-in-sync-pool/">https://www.cyhone.com/articles/think-in-sync-pool/</a>.</p>
+<p>The redesigned test case using <code>sync.Pool</code> is as follows:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> sPool = &amp;sync.Pool&#123;</span><br><span class="line">    New: function() <span class="keyword">interface</span>&#123;&#125; &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">make</span>([]<span class="type">byte</span>, <span class="number">0</span>, length)</span><br><span class="line">    &#125;,</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">function BenchmarkPool(b *testing.B) &#123;</span><br><span class="line">    b.ResetTimer()</span><br><span class="line">    <span class="keyword">for</span> i := <span class="number">0</span>; i &lt; b.N; i++ &#123;</span><br><span class="line">        <span class="comment">// Don&#x27;t preallocate our initial slice</span></span><br><span class="line">        buf := sPool.Get().([]<span class="type">byte</span>)</span><br><span class="line">        buf = <span class="built_in">append</span>(buf, testtext...)</span><br><span class="line">        buf = buf[:<span class="number">0</span>]</span><br><span class="line">        sPool.Put(buf)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Here, <code>New</code> provides a constructor function for <code>sync.Pool</code> to create an object when none is available. To use it, the <code>Get</code> method retrieves an object from the Pool, and after use, the <code>Put</code> method returns the object to <code>sync.Pool</code>. It’s important to manage the object’s lifecycle and clear it before returning it to <code>sync.Pool</code> to avoid dirty data. The test results are as follows:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">BenchmarkNoPreallocateByElement-12        522565              2129 ns/op            3320 B/op          9 allocs/op</span><br><span class="line">BenchmarkPreallocateByElement-12          781638              1311 ns/op            1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkPoolByElement-12                 957424              1233 ns/op              24 B/op          1 allocs/op</span><br><span class="line">BenchmarkNoPreallocate-12                4057801               310.3 ns/op          1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkPreallocate-12                  3841848               315.4 ns/op          1024 B/op          1 allocs/op</span><br><span class="line">BenchmarkPreallocate2-12                63356907                18.76 ns/op            0 B/op          0 allocs/op</span><br><span class="line">BenchmarkPool-12                        13784712                85.19 ns/op           24 B/op          1 allocs/op</span><br></pre></td></tr></table></figure>
+
+<p>As seen, <code>sync.Pool</code> still has a small amount of memory allocation, and its performance cost is higher than manually reusing Slices. However, considering its convenience and the significant performance improvement over not using it, it’s still a good solution.</p>
+<p>However, directly using <code>sync.Pool</code> also has two issues:</p>
+<ol>
+<li>For Slices, the initial memory allocated by <code>New</code> is fixed. If the runtime usage exceeds this, there may still be a lot of dynamic memory allocation adjustments.</li>
+<li>At the other extreme, if a Slice is dynamically expanded to a large size and then returned to <code>sync.Pool</code>,</li>
+</ol>
+<p> it may cause memory leaks and waste.</p>
+<h1 id="bytebufferpool"><a href="#bytebufferpool" class="headerlink" title="bytebufferpool"></a>bytebufferpool</h1><p>To achieve better runtime performance, <a target="_blank" rel="noopener" href="https://github.com/valyala/bytebufferpool">bytebufferpool</a> builds on <code>sync.Pool</code> with some simple statistical rules to minimize the impact of the two issues mentioned above during runtime. (The project’s author is Russian, with other projects like fasthttp, quicktemplate, and VictoriaMetrics under his belt, all of which are excellent examples of performance optimization. The Russian tech community often undertakes projects that push performance to its limits.</p>
+<p>The main structure in the code is as follows:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// bytebufferpool/pool.go</span></span><br><span class="line"><span class="keyword">const</span> (</span><br><span class="line">  minBitSize = <span class="number">6</span> <span class="comment">// 2**6=64 is a CPU cache line size</span></span><br><span class="line">  steps      = <span class="number">20</span></span><br><span class="line"></span><br><span class="line">  minSize = <span class="number">1</span> &lt;&lt; minBitSize</span><br><span class="line">  maxSize = <span class="number">1</span> &lt;&lt; (minBitSize + steps - <span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">  calibrateCallsThreshold = <span class="number">42000</span></span><br><span class="line">  maxPercentile           = <span class="number">0.95</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Pool <span class="keyword">struct</span> &#123;</span><br><span class="line">  calls       [steps]<span class="type">uint64</span></span><br><span class="line">  calibrating <span class="type">uint64</span></span><br><span class="line"></span><br><span class="line">  defaultSize <span class="type">uint64</span></span><br><span class="line">  maxSize     <span class="type">uint64</span></span><br><span class="line"></span><br><span class="line">  pool sync.Pool</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>defaultSize</code> is used for the initial size allocation for Slices, and <code>maxSize</code> is for rejecting Slices exceeding this size when returned to <code>sync.Pool</code>. The core algorithm dynamically adjusts <code>defaultSize</code> and <code>maxSize</code> based on statistical size information of Slices used at runtime, avoiding extra memory allocation while preventing memory leaks.</p>
+<p>This dynamic statistical process is relatively simple, dividing the size of Slices returned to the Pool into 20 intervals for statistics. After <code>calibrating</code> calls, it sorts by size, choosing the most frequently used interval size as <code>defaultSize</code>. This statistical method avoids many extra memory allocations. Then, by sorting by size and setting the 95% percentile size as <code>maxSize</code>, it prevents large objects from entering the Pool statistically. This dynamic adjustment of these two values achieves better performance at runtime.</p>
+<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><ul>
+<li>Always specify the capacity when initializing Slices.</li>
+<li>Avoid initializing Slices in loops.</li>
+<li>Consider using sync.Pool for performance-sensitive paths.</li>
+<li>The cost of memory allocation can far exceed that of business logic.</li>
+<li>For reusing byte buffers, consider bytebufferpool.</li>
+</ul>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/en/2024/03/04/golang-slice-performance/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2024-03-04 10:33:14
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/performance/" title="performance">
+                        #performance
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/golang/" title="golang">
+                        #golang
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Basic-Performance-Tests"><span class="toc-text">Basic Performance Tests</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Appending-an-Entire-Slice"><span class="toc-text">Appending an Entire Slice</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reusing-Slices"><span class="toc-text">Reusing Slices</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#sync-Pool"><span class="toc-text">sync.Pool</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#bytebufferpool"><span class="toc-text">bytebufferpool</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/en/js/catalog.js"></script>
+
+
+
+
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+  <div id="gitalk-container"></div>
+
+  <script>
+    function loadGitalkSuc() {
+      const gitalk = new Gitalk({
+        clientID: 'fa956f38daf8cc1f8222',
+        clientSecret: '8e37dcda7dc6d86518fc00b06f8d7008ef8542c6',
+        repo: 'oilbeater.github.com',
+        owner: 'oilbeater',
+        admin: ['oilbeater'],
+        id: location.pathname,
+        distractionFreeMode: false
+      })
+
+      gitalk.render('gitalk-container')
+    }
+  </script>
+  
+    <link rel="stylesheet" href="/plugins/gitalk.css">
+    <script type="text/javascript" src="/plugins/gitalk.min.js" onload="loadGitalkSuc(this)"></script>
+  
+
+
+
+      </div>
+    
+  </div>
+
+
+        
+<div class="footer">
+  <div class="social">
+    <ul>
+      
+        <li>
+          
+              <a title="github" target="_blank" rel="noopener" href="https://github.com/oilbeater">
+                <i class="iconfont icon-github"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+            <a title="email" href="mailto:mailto:liumengxinfly@gmail.com">
+              <i class="iconfont icon-envelope"></i>
+            </a>
+            
+        </li>
+        
+        <li>
+          
+              <a title="twitter" target="_blank" rel="noopener" href="https://twitter.com/liumengxinfly">
+                <i class="iconfont icon-twitter"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+              <a title="linkedin" target="_blank" rel="noopener" href="https://www.linkedin.com/in/oilbeater/">
+                <i class="iconfont icon-linkedin"></i>
+              </a>
+              
+        </li>
+        
+        <li>
+          
+              <a title="rss" href="/atom.xml">
+                <i class="iconfont icon-rss"></i>
+              </a>
+              
+        </li>
+        
+    </ul>
+  </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/oilbeater/oilbeater.github.com">Copyright © 2024 Oilbeater</a>
+        
+    </div>
+  
+    
+    <div class="footer-more">
+      
+        <a target="_blank" rel="noopener" href="https://github.com/zchengsite/hexo-theme-oranges">Theme by Oranges | Powered by Hexo</a>
+        
+    </div>
+  
+  
+    <div class="footer-views">
+      
+          本站总访问量<span id="busuanzi_value_site_pv"></span>次
+        
+      
+          本文总阅读量<span id="busuanzi_value_page_pv"></span>次
+        
+      
+          本站访客数<span id="busuanzi_value_site_uv"></span>人
+        
+      
+    </div>
+  
+</div>
+
+      </div>
+
+      <div class="tools-bar">
+        <div class="back-to-top tools-bar-item hidden">
+  <a href="javascript: void(0)">
+    <i class="iconfont icon-chevronup"></i>
+  </a>
+</div>
+
+
+<script src="/en/js/backtotop.js"></script>
+
+
+
+        
+  <div class="search-icon tools-bar-item" id="search-icon">
+    <a href="javascript: void(0)">
+      <i class="iconfont icon-search"></i>
+    </a>
+  </div>
+
+  <div class="search-overlay hidden">
+    <div class="search-content" tabindex="0">
+      <div class="search-title">
+        <span class="search-icon-input">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-search"></i>
+          </a>
+        </span>
+        
+          <input type="text" class="search-input" id="search-input" placeholder="Search...">
+        
+        <span class="search-close-icon" id="search-close-icon">
+          <a href="javascript: void(0)">
+            <i class="iconfont icon-close"></i>
+          </a>
+        </span>
+      </div>
+      <div class="search-result" id="search-result"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    var inputArea = document.querySelector("#search-input")
+    var searchOverlayArea = document.querySelector(".search-overlay")
+
+    inputArea.onclick = function() {
+      getSearchFile()
+      this.onclick = null
+    }
+
+    inputArea.onkeydown = function() {
+      if(event.keyCode == 13)
+        return false
+    }
+
+    function openOrHideSearchContent() {
+      let isHidden = searchOverlayArea.classList.contains('hidden')
+      if (isHidden) {
+        searchOverlayArea.classList.remove('hidden')
+        document.body.classList.add('hidden')
+        // inputArea.focus()
+      } else {
+        searchOverlayArea.classList.add('hidden')
+        document.body.classList.remove('hidden')
+      }
+    }
+
+    function blurSearchContent(e) {
+      if (e.target === searchOverlayArea) {
+        openOrHideSearchContent()
+      }
+    }
+
+    document.querySelector("#search-icon").addEventListener("click", openOrHideSearchContent, false)
+    document.querySelector("#search-close-icon").addEventListener("click", openOrHideSearchContent, false)
+    searchOverlayArea.addEventListener("click", blurSearchContent, false)
+
+    var searchFunc = function (path, search_id, content_id) {
+      'use strict';
+      var $input = document.getElementById(search_id);
+      var $resultContent = document.getElementById(content_id);
+      $resultContent.innerHTML = "<ul><span class='local-search-empty'>First search, index file loading, please wait...<span></ul>";
+      $.ajax({
+        // 0x01. load xml file
+        url: path,
+        dataType: "xml",
+        success: function (xmlResponse) {
+          // 0x02. parse xml file
+          var datas = $("entry", xmlResponse).map(function () {
+            return {
+              title: $("title", this).text(),
+              content: $("content", this).text(),
+              url: $("url", this).text()
+            };
+          }).get();
+          $resultContent.innerHTML = "";
+
+          $input.addEventListener('input', function () {
+            // 0x03. parse query to keywords list
+            var str = '<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length <= 0) {
+              return;
+            }
+            // 0x04. perform local searching
+            datas.forEach(function (data) {
+              var isMatch = true;
+              var content_index = [];
+              if (!data.title || data.title.trim() === '') {
+                data.title = "Untitled";
+              }
+              var orig_data_title = data.title.trim();
+              var data_title = orig_data_title.toLowerCase();
+              var orig_data_content = data.content.trim().replace(/<[^>]+>/g, "");
+              var data_content = orig_data_content.toLowerCase();
+              var data_url = data.url;
+              var index_title = -1;
+              var index_content = -1;
+              var first_occur = -1;
+              // only match artiles with not empty contents
+              if (data_content !== '') {
+                keywords.forEach(function (keyword, i) {
+                  index_title = data_title.indexOf(keyword);
+                  index_content = data_content.indexOf(keyword);
+
+                  if (index_title < 0 && index_content < 0) {
+                    isMatch = false;
+                  } else {
+                    if (index_content < 0) {
+                      index_content = 0;
+                    }
+                    if (i == 0) {
+                      first_occur = index_content;
+                    }
+                    // content_index.push({index_content:index_content, keyword_len:keyword_len});
+                  }
+                });
+              } else {
+                isMatch = false;
+              }
+              // 0x05. show search results
+              if (isMatch) {
+                str += "<li><a href='" + data_url + "' class='search-result-title'>" + orig_data_title + "</a>";
+                var content = orig_data_content;
+                if (first_occur >= 0) {
+                  // cut out 100 characters
+                  var start = first_occur - 20;
+                  var end = first_occur + 80;
+
+                  if (start < 0) {
+                    start = 0;
+                  }
+
+                  if (start == 0) {
+                    end = 100;
+                  }
+
+                  if (end > content.length) {
+                    end = content.length;
+                  }
+
+                  var match_content = content.substr(start, end);
+
+                  // highlight all keywords
+                  keywords.forEach(function (keyword) {
+                    var regS = new RegExp(keyword, "gi");
+                    match_content = match_content.replace(regS, "<span class=\"search-keyword\">" + keyword + "</span>");
+                  });
+
+                  str += "<p class=\"search-result-abstract\">" + match_content + "...</p>"
+                }
+                str += "</li>";
+              }
+            });
+            str += "</ul>";
+            if (str.indexOf('<li>') === -1) {
+              return $resultContent.innerHTML = "<ul><span class='local-search-empty'>No result<span></ul>";
+            }
+            $resultContent.innerHTML = str;
+          });
+        },
+        error: function(xhr, status, error) {
+          $resultContent.innerHTML = ""
+          if (xhr.status === 404) {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The search.xml file was not found, please refer to：<a href='https://github.com/zchengsite/hexo-theme-oranges#configuration' target='_black'>configuration</a><span></ul>";
+          } else {
+            $resultContent.innerHTML = "<ul><span class='local-search-empty'>The request failed, Try to refresh the page or try again later.<span></ul>";
+          }
+        }
+      });
+      $(document).on('click', '#search-close-icon', function() {
+        $('#search-input').val('');
+        $('#search-result').html('');
+      });
+    }
+
+    var getSearchFile = function() {
+        var path = "/search.xml";
+        searchFunc(path, 'search-input', 'search-result');
+    }
+  </script>
+
+
+
+
+        
+  <div class="tools-bar-item theme-icon" id="switch-color-scheme">
+    <a href="javascript: void(0)">
+      <i id="theme-icon" class="iconfont icon-moon"></i>
+    </a>
+  </div>
+
+  
+<script src="/en/js/colorscheme.js"></script>
+
+
+
+
+
+        
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + The%20Impact%20of%20Preallocating%20Slice%20Memory%20in%20Golang%20(Continued) + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2024%2F03%2F04%2Fgolang-slice-performance-cont%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2024/03/04/golang-slice-performance-cont/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
+  
+  
+<script src="/en/js/shares.js"></script>
+
+
+
+      </div>
+    </div>
+  </body>
+</html>
