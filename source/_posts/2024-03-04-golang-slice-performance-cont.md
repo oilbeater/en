@@ -11,7 +11,7 @@ tags: [performance, golang]
 - [bytebufferpool](#bytebufferpool)
 - [Conclusion](#conclusion)
 
-I previously wrote about [The Impact of Preallocating Slice Memory in Golang](https://oilbeater.com/en/2024/03/04/golang-slice-performance/), discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool on performance.
+I previously wrote about [The Impact of Preallocating Slice Memory in Golang](https://oilbeater.com/en/2024/03/04/golang-slice-performance/), discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool and bytebufferpool on performance.
 
 # Basic Performance Tests
 
@@ -98,7 +98,7 @@ BenchmarkPreallocate-12                  3968048               306.7 ns/op      
 
 Both cases only involved one memory allocation, with almost identical time consumption, significantly lower than appending elements one by one. On the one hand, appending an entire Slice knows the final size at the time of Slice expansion, eliminating the need for dynamic memory allocation and reducing overhead. On the other hand, appending an entire Slice involves block copying, reducing loop overhead and significantly improving performance.
 
-However, there is still one memory allocation in each case, and we cannot determine the proportion of time it consumes overall.
+However, there is still one memory allocation in each case, and we cannot determine the proportion of time it consumes.
 
 # Reusing Slices
 
@@ -132,7 +132,7 @@ This time, the test showed no memory allocation, and the overall time consumed d
 
 # sync.Pool
 
-In simple scenarios, one can manually clear the Slice and reuse it within the loop, as in the previous test case. However, in real scenarios, object creation often occurs in various parts of the code, necessitating unified management and reuse. Golang's `sync.Pool` serves this purpose, and its use is quite simple. However, its internal implementation is complex, with a lot of lock-free design for performance. For more details on its implementation, see [https://www.cyhone.com/articles/think-in-sync-pool/](https://www.cyhone.com/articles/think-in-sync-pool/).
+In simple scenarios, one can manually clear the Slice and reuse it within the loop, as in the previous test case. However, in real scenarios, object creation often occurs in various parts of the code, necessitating unified management and reuse. Golang's `sync.Pool` serves this purpose, and its use is quite simple. However, its internal implementation is complex, with a lot of lock-free design for performance. For more details on its implementation, please see [think-in-sync-pool/](https://www.cyhone.com/articles/think-in-sync-pool/).
 
 The redesigned test case using `sync.Pool` is as follows:
 
@@ -172,13 +172,11 @@ As seen, `sync.Pool` still has a small amount of memory allocation, and its perf
 However, directly using `sync.Pool` also has two issues:
 
 1. For Slices, the initial memory allocated by `New` is fixed. If the runtime usage exceeds this, there may still be a lot of dynamic memory allocation adjustments.
-2. At the other extreme, if a Slice is dynamically expanded to a large size and then returned to `sync.Pool`,
-
- it may cause memory leaks and waste.
+2. At the other extreme, if a Slice is dynamically expanded to a large size and then returned to `sync.Pool`, it may lead memory leaks and waste.
 
 # bytebufferpool
 
-To achieve better runtime performance, [bytebufferpool](https://github.com/valyala/bytebufferpool) builds on `sync.Pool` with some simple statistical rules to minimize the impact of the two issues mentioned above during runtime. (The project's author is Russian, with other projects like fasthttp, quicktemplate, and VictoriaMetrics under his belt, all of which are excellent examples of performance optimization. The Russian tech community often undertakes projects that push performance to its limits.
+To achieve better runtime performance, [bytebufferpool](https://github.com/valyala/bytebufferpool) builds on `sync.Pool` with some simple statistical rules to minimize the impact of the two issues mentioned above during runtime. (The project's author has other projects like fasthttp, quicktemplate, and VictoriaMetrics under his belt, all of which are excellent examples of performance optimization.
 
 The main structure in the code is as follows:
 
@@ -208,7 +206,7 @@ type Pool struct {
 
 `defaultSize` is used for the initial size allocation for Slices, and `maxSize` is for rejecting Slices exceeding this size when returned to `sync.Pool`. The core algorithm dynamically adjusts `defaultSize` and `maxSize` based on statistical size information of Slices used at runtime, avoiding extra memory allocation while preventing memory leaks.
 
-This dynamic statistical process is relatively simple, dividing the size of Slices returned to the Pool into 20 intervals for statistics. After `calibrating` calls, it sorts by size, choosing the most frequently used interval size as `defaultSize`. This statistical method avoids many extra memory allocations. Then, by sorting by size and setting the 95% percentile size as `maxSize`, it prevents large objects from entering the Pool statistically. This dynamic adjustment of these two values achieves better performance at runtime.
+This dynamic statistical process is relatively simple, dividing the size of Slices returned to the Pool into 20 intervals for statistics. After `calibrating` number calls, it sorts by size, choosing the most frequently used interval size as `defaultSize`. This statistical method avoids many extra memory allocations. Then, by sorting by size and setting the 95% percentile size as `maxSize`, it prevents large objects from entering the Pool statistically. This dynamic adjustment of these two values achieves better performance at runtime.
 
 # Conclusion
 
