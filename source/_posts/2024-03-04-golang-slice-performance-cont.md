@@ -132,42 +132,58 @@ This time, the test showed no memory allocation, and the overall time consumed d
 
 # sync.Pool
 
-In simple scenarios, one can manually clear the Slice and reuse it within the loop, as in the previous test case. However, in real scenarios, object creation often occurs in various parts of the code, necessitating unified management and reuse. Golang's `sync.Pool` serves this purpose, and its use is quite simple. However, its internal implementation is complex, with a lot of lock-free design for performance. For more details on its implementation, please see [think-in-sync-pool/](https://www.cyhone.com/articles/think-in-sync-pool/).
+In simple scenarios, one can manually clear the Slice and reuse it within the loop, as in the previous test case. However, in real scenarios, object creation often occurs in various parts of the code, necessitating unified management and reuse. Golang's `sync.Pool` serves this purpose, and its use is quite simple. However, its internal implementation is complex, with a lot of lock-free design for performance. For more details on its implementation, please see [Let's dive: a tour of sync.Pool internals](https://unskilled.blog/posts/lets-dive-a-tour-of-sync.pool-internals/).
 
 The redesigned test case using `sync.Pool` is as follows:
 
 ```go
-var sPool = &sync.Pool{
-    New: function() interface{} {
-        return make([]byte, 0, length)
-    },
+var sPool = &sync.Pool{ 
+        New: func() any {
+                b := make([]byte, 0, length)
+                return &b
+        },
 }
 
-function BenchmarkPool(b *testing.B) {
-    b.ResetTimer()
-    for i := 0; i < b.N; i++ {
-        // Don't preallocate our initial slice
-        buf := sPool.Get().([]byte)
-        buf = append(buf, testtext...)
-        buf = buf[:0]
-        sPool.Put(buf)
-    }
+func BenchmarkPoolByElement(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+                // Don't preallocate our initial slice
+                b := sPool.Get().(*[]byte)
+                buf := *b
+                for j := 0; j < length; j++ {
+                        buf = append(buf, testtext[j])
+                }
+                buf = buf[:0]
+                sPool.Put(b)
+        }
+}
+ 
+func BenchmarkPool(b *testing.B) {
+        b.ResetTimer()
+        for i := 0; i < b.N; i++ {
+                // Don't preallocate our initial slice
+                bufPtr := sPool.Get().(*[]byte)
+                buf := * bufPtr
+                buf = append(buf, testtext...)
+                buf = buf[:0]
+                sPool.Put(bufPtr)
+        }
 }
 ```
 
 Here, `New` provides a constructor function for `sync.Pool` to create an object when none is available. To use it, the `Get` method retrieves an object from the Pool, and after use, the `Put` method returns the object to `sync.Pool`. It's important to manage the object's lifecycle and clear it before returning it to `sync.Pool` to avoid dirty data. The test results are as follows:
 
 ```bash
-BenchmarkNoPreallocateByElement-12        522565              2129 ns/op            3320 B/op          9 allocs/op
-BenchmarkPreallocateByElement-12          781638              1311 ns/op            1024 B/op          1 allocs/op
-BenchmarkPoolByElement-12                 957424              1233 ns/op              24 B/op          1 allocs/op
-BenchmarkNoPreallocate-12                4057801               310.3 ns/op          1024 B/op          1 allocs/op
-BenchmarkPreallocate-12                  3841848               315.4 ns/op          1024 B/op          1 allocs/op
-BenchmarkPreallocate2-12                63356907                18.76 ns/op            0 B/op          0 allocs/op
-BenchmarkPool-12                        13784712                85.19 ns/op           24 B/op          1 allocs/op
+BenchmarkNoPreallocateByElement-12        469431              2313 ns/op            3320 B/op          9 allocs/op
+BenchmarkPreallocateByElement-12          802392              1339 ns/op            1024 B/op          1 allocs/op
+BenchmarkPoolByElement-12                1212828               961.5 ns/op             0 B/op          0 allocs/op
+BenchmarkNoPreallocate-12                3249004               370.2 ns/op          1024 B/op          1 allocs/op
+BenchmarkPreallocate-12                  3268851               368.2 ns/op          1024 B/op          1 allocs/op
+BenchmarkPreallocate2-12                62596077                18.63 ns/op            0 B/op          0 allocs/op
+BenchmarkPool-12                        32707296                35.59 ns/op            0 B/op          0 allocs/op
 ```
 
-As seen, `sync.Pool` still has a small amount of memory allocation, and its performance cost is higher than manually reusing Slices. However, considering its convenience and the significant performance improvement over not using it, it's still a good solution.
+As can be seen, using `sync.Pool` can also avoid memory allocation. Since `sync.Pool` also has some additional processing performance overhead compared to manually reusing Slice, it is slightly higher. However, considering the convenience of use and the significant performance improvement compared to not using it, it is still a good solution.
 
 However, directly using `sync.Pool` also has two issues:
 
@@ -212,6 +228,6 @@ This dynamic statistical process is relatively simple, dividing the size of Slic
 
 - Always specify the capacity when initializing Slices.
 - Avoid initializing Slices in loops.
-- Consider using sync.Pool for performance-sensitive paths.
+- Consider using `sync.Pool` for performance-sensitive paths.
 - The cost of memory allocation can far exceed that of business logic.
-- For reusing byte buffers, consider bytebufferpool.
+- For reusing byte buffers, consider `bytebufferpool`.
