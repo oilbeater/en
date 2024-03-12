@@ -181,7 +181,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2024-03-04 10:26:00
+          2024-03-12 08:03:27
         </span>
         
               <span class="post-tags">
@@ -244,6 +244,9 @@
 <p>When changing the slice’s contents to a more complex struct, it was expected that copying would incur greater performance overhead, but in practice, the performance gap between pre-allocation and dynamic allocation for complex structs was even smaller. It appears there are many internal optimizations, and the behavior does not always align with intuition.</p>
 <h1 id="Lint-Tool-prealloc"><a href="#Lint-Tool-prealloc" class="headerlink" title="Lint Tool prealloc"></a>Lint Tool prealloc</h1><p>Although pre-allocating memory can bring certain performance improvements, relying solely on manual review for this issue in larger projects is prone to oversights. This is where lint tools for automatic code scanning become necessary. <a target="_blank" rel="noopener" href="https://github.com/alexkohler/prealloc">prealloc</a> is such a tool that can scan for potential slices that could be pre-allocated but were not, and it can be integrated into <a target="_blank" rel="noopener" href="https://golangci-lint.run/usage/linters/#prealloc">golangci-lint</a>.</p>
 <h1 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h1><p>Overall, pre-allocating slice memory is a relatively simple yet effective optimization method. Even when slice capacities are small, pre-allocation can still significantly improve performance. Using static code scanning tools like prealloc, these potential optimizations can be easily detected and integrated into CI, simplifying future operations.</p>
+<blockquote>
+<p>Update: I previously wrote about <a href="https://oilbeater.com/en/2024/03/04/golang-slice-performance/">The Impact of Preallocating Slice Memory in Golang</a>, discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool and bytebufferpool on performance here <a href="https://oilbeater.com/en/2024/03/04/golang-slice-performance-cont/">The Impact of Preallocating Slice Memory in Golang (Continued)</a></p>
+</blockquote>
 
       </div>
       
@@ -259,7 +262,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2024-03-04 10:26:00
+              2024-03-12 08:03:27
             </span>
             
                   <span class="post-tags">
