@@ -141,3 +141,5 @@ Although pre-allocating memory can bring certain performance improvements, relyi
 # Summary
 
 Overall, pre-allocating slice memory is a relatively simple yet effective optimization method. Even when slice capacities are small, pre-allocation can still significantly improve performance. Using static code scanning tools like prealloc, these potential optimizations can be easily detected and integrated into CI, simplifying future operations.
+
+> Update: I previously wrote about [The Impact of Preallocating Slice Memory in Golang](https://oilbeater.com/en/2024/03/04/golang-slice-performance/), discussing the performance effects of preallocating memory in Slices. The scenarios considered were relatively simple, and recently, I conducted further tests to provide more information, including the impact of appending an entire Slice and the use of sync.Pool and bytebufferpool on performance here [The Impact of Preallocating Slice Memory in Golang (Continued)](https://oilbeater.com/en/2024/03/04/golang-slice-performance-cont/)
