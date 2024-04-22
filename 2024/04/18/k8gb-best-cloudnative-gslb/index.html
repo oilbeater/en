@@ -183,7 +183,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2024-04-22 10:56:29
+          2024-04-22 10:57:59
         </span>
         
               <span class="post-tags">
@@ -251,6 +251,9 @@
 <p><img src="https://www.k8gb.io/docs/images/k8gb-multi-cluster-interoperabililty.svg" alt="k8gb multi-cluster interoperability"></p>
 <p>The general idea is that each cluster’s k8gb registers its CoreDNS’s Ingress IP with the upstream CoreDNS, allowing each cluster to directly access another cluster’s CoreDNS. Then, each cluster’s CoreDNS maintains its own <code>localtargets-app.cloud.example.com</code> Ingress IP and health status for <code>app.cloud.example.com</code>, allowing each cluster to obtain other clusters’ Ingress IPs for the same domain name and include them in their return results, achieving multi-cluster domain name resolution syncing.</p>
 <h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>k8gb, as an open-source GSLB, achieves seamless integration with Kubernetes, enabling effective cross-cluster domain name and traffic management with minimal external dependencies—only requiring an API to add DNS records. Although this project is not yet widely popular, it is already the best solution in this field in my view.</p>
+<blockquote>
+<p>This post was originally written in Chinese and I translated it to English with the help of GPT4. If you find any errors, please feel free to let me know.</p>
+</blockquote>
 
       </div>
       
@@ -266,7 +269,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2024-04-22 10:56:29
+              2024-04-22 10:57:59
             </span>
             
                   <span class="post-tags">
