@@ -77,3 +77,5 @@ The general idea is that each cluster's k8gb registers its CoreDNS's Ingress IP 
 ## Summary
 
 k8gb, as an open-source GSLB, achieves seamless integration with Kubernetes, enabling effective cross-cluster domain name and traffic management with minimal external dependencies—only requiring an API to add DNS records. Although this project is not yet widely popular, it is already the best solution in this field in my view.
+
+> This post was originally written in Chinese and I translated it to English with the help of GPT4. If you find any errors, please feel free to let me know.
