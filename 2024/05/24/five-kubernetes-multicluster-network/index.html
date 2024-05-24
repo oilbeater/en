@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content="k8gb: The Best Open Source GSLB Solution for Cloud Native | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="5 Solutions for Multi-Cluster Communication in Kubernetes | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content="k8gb: The Best Open Source GSLB Solution for Cloud Native | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="5 Solutions for Multi-Cluster Communication in Kubernetes | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,7 +28,7 @@
   
   <title>
     
-      k8gb: The Best Open Source GSLB Solution for Cloud Native 
+      5 Solutions for Multi-Cluster Communication in Kubernetes 
       
       
       |
@@ -179,7 +179,7 @@
   <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
   <div class="container post-details" id="post-details">
     <div class="post-content">
-      <div class="post-title">k8gb: The Best Open Source GSLB Solution for Cloud Native</div>
+      <div class="post-title">5 Solutions for Multi-Cluster Communication in Kubernetes</div>
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
@@ -205,52 +205,85 @@
           
       </div>
       <div class="markdown-body">
-        <p>Balancing traffic across multiple Kubernetes clusters and achieving automatic disaster recovery switching has always been a headache. We have explored public clouds and <a target="_blank" rel="noopener" href="https://github.com/karmada-io/multi-cluster-ingress-nginx">Karmada Ingress</a>, and have also tried manual DNS solutions, but these approaches often fell short in terms of cost, universality, flexibility, and automation. It was not until we discovered <a target="_blank" rel="noopener" href="https://www.k8gb.io/">k8gb</a>, a project initiated by South Africa’s Absa Group to provide banking-level multi-availability, that we realized the ingenuity of using various DNS protocols to deliver a universal and highly automated GSLB solution. This blog will briefly discuss the problems with other approaches and how k8gb cleverly uses DNS to implement GSLB.</p>
-<h2 id="What-is-GSLB"><a href="#What-is-GSLB" class="headerlink" title="What is GSLB"></a>What is GSLB</h2><p>GSLB (Global Service Load Balancer) is a concept in contrast to single-cluster load balancing, which mainly serves as an entrance to a cluster to distribute traffic within the cluster, whereas GSLB typically acts as an entrance for traffic across multiple clusters, handling load balancing and fault management. On one hand, GSLB can set geographic affinity rules to route traffic closer to users, enhancing overall performance; on the other hand, it can automatically redirect traffic to a functioning cluster when one fails, minimizing the impact on users.</p>
-<h2 id="Problems-with-Other-Solutions"><a href="#Problems-with-Other-Solutions" class="headerlink" title="Problems with Other Solutions"></a>Problems with Other Solutions</h2><h3 id="Commercial-Load-Balancers"><a href="#Commercial-Load-Balancers" class="headerlink" title="Commercial Load Balancers"></a>Commercial Load Balancers</h3><p>GSLB is not a new concept, so many commercial companies have mature products, such as <a target="_blank" rel="noopener" href="https://www.f5.com/solutions/use-cases/global-server-load-balancing-gslb">F5 GSLB</a>. These products generally have the following drawbacks:</p>
-<ol>
-<li>They do not integrate well with cloud-native systems, often requiring deployment outside Kubernetes clusters, which complicates unified management.</li>
-<li>They are costly and pose risks of vendor lock-in.</li>
-</ol>
-<h3 id="Public-Cloud-Global-Load-Balancers"><a href="#Public-Cloud-Global-Load-Balancers" class="headerlink" title="Public Cloud Global Load Balancers"></a>Public Cloud Global Load Balancers</h3><p>Public clouds offer multi-cluster load balancing products to solve the issue of traffic distribution across multiple regions, such as AWS’s <a target="_blank" rel="noopener" href="https://aws.amazon.com/global-accelerator/">Global Accelerator</a> and GCP’s <a target="_blank" rel="noopener" href="https://cloud.google.com/load-balancing/docs/https">External Application Load Balancer</a>. GCP even offers custom <a target="_blank" rel="noopener" href="https://cloud.google.com/kubernetes-engine/docs/concepts/multi-cluster-ingress">Multi Cluster Ingress</a> resources that integrate well with Kubernetes Ingress. However, they also have several problems:</p>
-<ol>
-<li>Although they support multi-cluster load balancing, all clusters must be within the same public cloud, preventing inter-cloud traffic scheduling.</li>
-<li>They are not usable in private clouds.</li>
-</ol>
-<h3 id="Karmada-Multi-Cluster-Ingress"><a href="#Karmada-Multi-Cluster-Ingress" class="headerlink" title="Karmada Multi Cluster Ingress"></a>Karmada Multi Cluster Ingress</h3><p>Karmada is a multi-cluster orchestration tool that also provides its own multi-cluster traffic routing solution through <a target="_blank" rel="noopener" href="https://karmada.io/docs/userguide/service/multi-cluster-ingress/">Karmada Multi Cluster Ingress</a>. This solution involves deploying an ingress-nginx provided by the Karmada community and defining <code>MultiClusterIngress</code> within a cluster, but it has several issues:</p>
-<ol>
-<li>It relies on inter-cluster container network connectivity and CRDs like ServiceImporter and ServiceExporter, which have high requirements.</li>
-<li>It requires additional management of the ingress-nginx instance that provides GSLB services, including its deployment location, quantity, and distribution, which are operational considerations.</li>
-<li>The <a target="_blank" rel="noopener" href="https://github.com/karmada-io/multi-cluster-ingress-nginx">multi-cluster-ingress-nginx</a> modified by the community has had little code submission in recent years, raising concerns about its reliability.</li>
-</ol>
-<h3 id="Simple-DNS-Approach"><a href="#Simple-DNS-Approach" class="headerlink" title="Simple DNS Approach"></a>Simple DNS Approach</h3><p>A simple, manually configured DNS-based solution can work initially. Most DNS providers offer health check features, allowing us to add multiple cluster exit IP addresses to DNS records and configure health checks for fault switching. However, this simple approach has clear limitations as it scales:</p>
-<ol>
-<li>It lacks good automation; a single cluster might have multiple domain names and Ingress IP combinations, and manually managing their mappings becomes increasingly challenging with scale.</li>
-<li>DNS providers’ health checks are typically based on TCP and ICMP, so they can detect and switch during complete cluster outages. However, partial failures are undetectable, e.g., when multiple Ingresses share an ingress-controller and route traffic by domain name. If the backend instances of one service fail, but other services on the ingress-controller operate normally, the health check will still pass, preventing traffic from being redirected to another cluster.</li>
-<li>DNS inherently involves caching at various levels, which can delay updates.</li>
-<li>DNS health checks are a capability provided by the vendor and are not guaranteed to be available from all vendors, especially in private cloud scenarios.</li>
-</ol>
-<h2 id="k8gb’s-Solution"><a href="#k8gb’s-Solution" class="headerlink" title="k8gb’s Solution"></a>k8gb’s Solution</h2><p>k8gb’s solution also utilizes DNS but addresses the deficiencies of the simple DNS approach through a series</p>
-<p> of clever designs.</p>
-<p>The essence of the simple DNS approach’s problem is that it does not integrate well with Kubernetes. Dynamic information within Kubernetes, such as new Ingress additions, new domain names, and service health status, cannot be effectively synced to upstream DNS servers. Upstream DNS servers’ simple health checks are also inadequate for handling the complex changes within Kubernetes. Thus, a core change in k8gb is that the upstream DNS records are no longer A or AAAA records pointing to a cluster’s exit address but are forwarded to a CoreDNS configured within the cluster for DNS resolution, pushing the complex DNS logic down into the cluster for internal control. In this way, the upstream DNS only needs to serve as a simple proxy without needing to configure health checks or dynamically adjust multiple address mappings.</p>
-<p>The user’s DNS request process is illustrated below:</p>
+        <p>As enterprises scale their operations, the use of Kubernetes extends from single-cluster to multi-cluster deployments. In a multi-cluster environment, communication between clusters becomes a critical area of research. This article introduces the basic principles, advantages, and limitations of five solutions for cross-Kubernetes cluster communication.</p>
+<h2 id="1-Underlay-Network"><a href="#1-Underlay-Network" class="headerlink" title="1. Underlay Network"></a>1. Underlay Network</h2><p>This type of network plugin includes <a target="_blank" rel="noopener" href="https://www.cni.dev/plugins/current/main/macvlan/">macvlan</a>, <a target="_blank" rel="noopener" href="https://www.cni.dev/plugins/current/main/ipvlan/">ipvlan</a>, <a target="_blank" rel="noopener" href="https://kubeovn.github.io/docs/stable/start/underlay/">Kube-OVN underlay</a>, and various cloud VPC CNIs.</p>
+<p><strong>Basic Principle</strong>:</p>
+<p>From the CNI (Container Network Interface) perspective, the underlay network is the simplest approach. This method relies on the underlying infrastructure to achieve connectivity at the network level, such as using VPC Peering on public clouds or configuring routing and large Layer 2 networks in physical networks. Once the underlying network is connected, cross-cluster container networks naturally connect.</p>
+<p><strong>Advantages</strong>:</p>
 <ul>
-<li><img src="https://www.k8gb.io/docs/images/gslb-basic-multi-cluster.svg" alt="K8GB multi-cluster interoperability"></li>
+<li>Simplest from a CNI perspective, requiring no additional operations.</li>
+<li>Architecturally clear, delegating the responsibility of cross-cluster communication to the underlying network.</li>
 </ul>
-<ol>
-<li>The user requests a domain name’s IP record from an external DNS provider.</li>
-<li>The external DNS forwards this request to a CoreDNS managed by k8gb within the cluster.</li>
-<li>k8gb analyzes available Ingress IPs based on the Ingress Spec’s domain name, the Ingress Status’s Ingress IP, and the health status of backend pods within the cluster, as well as load balancing policies, and returns a usable Ingress IP to the user.</li>
-<li>The user can then directly access the corresponding Ingress Controller via this IP.</li>
-<li>If a k8gb-managed CoreDNS in one cluster fails, since the upstream DNS concurrently proxies DNS requests to multiple clusters, another cluster can also return its Ingress IP, allowing the user to choose from multiple available IPs.</li>
-</ol>
-<p>This method requires administrators to register several domain name suffixes with the upstream DNS and proxy them to each cluster’s CoreDNS. k8gb also provides automation capabilities; once certificates are properly configured, it can automatically analyze the domain names used in Ingress and automatically register them with the upstream DNS, significantly simplifying administrators’ tasks.</p>
-<p>Another important aspect to note is that each cluster’s CoreDNS must not only record its Ingress IPs but also those of other clusters for the same Ingress. If a cluster’s corresponding service’s pods are Not Ready, CoreDNS will return NXDomain. If the client receives this response, it will treat it as if the domain cannot be resolved, even though another cluster’s service might still be operational. Therefore, k8gb must also sync all clusters’ Ingress IPs for the same domain name and their health status.</p>
-<p>As is well known, syncing data across multiple clusters is a global challenge, but k8gb cleverly achieves data syncing through DNS.</p>
-<p>The syncing process is illustrated below:</p>
-<p><img src="https://www.k8gb.io/docs/images/k8gb-multi-cluster-interoperabililty.svg" alt="k8gb multi-cluster interoperability"></p>
-<p>The general idea is that each cluster’s k8gb registers its CoreDNS’s Ingress IP with the upstream CoreDNS, allowing each cluster to directly access another cluster’s CoreDNS. Then, each cluster’s CoreDNS maintains its own <code>localtargets-app.cloud.example.com</code> Ingress IP and health status for <code>app.cloud.example.com</code>, allowing each cluster to obtain other clusters’ Ingress IPs for the same domain name and include them in their return results, achieving multi-cluster domain name resolution syncing.</p>
-<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>k8gb, as an open-source GSLB, achieves seamless integration with Kubernetes, enabling effective cross-cluster domain name and traffic management with minimal external dependencies—only requiring an API to add DNS records. Although this project is not yet widely popular, it is already the best solution in this field in my view.</p>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Depends on specific CNI; underlay networks have limited use cases, and some scenarios can only use overlay networks.</li>
+<li>Difficulties in heterogeneous environments, such as between multiple clouds or between public and private clouds.</li>
+<li>Provides only basic container network communication without higher-level functionalities like service discovery, domain names, and network policies.</li>
+<li>Lacks fine-grained control by connecting all cluster container networks at once.</li>
+</ul>
+<h2 id="2-Overlay-CNI-Providing-Cross-Cluster-Communication"><a href="#2-Overlay-CNI-Providing-Cross-Cluster-Communication" class="headerlink" title="2. Overlay CNI Providing Cross-Cluster Communication"></a>2. Overlay CNI Providing Cross-Cluster Communication</h2><p>When underlay networks cannot be used, some specific CNIs achieve cross-cluster communication at the overlay level, such as <a target="_blank" rel="noopener" href="https://cilium.io/use-cases/cluster-mesh/">Cilium Cluster Mesh</a>, <a target="_blank" rel="noopener" href="https://antrea.io/docs/v2.0.0/docs/multicluster/quick-start/">Antrea Multi-Cluster</a>, and <a target="_blank" rel="noopener" href="https://kubeovn.github.io/docs/stable/en/advance/with-ovn-ic/">Kube-OVN with ovn-ic</a>.</p>
+<p><strong>Basic Principle</strong>:</p>
+<p>These CNIs typically select a set of nodes within the cluster as gateway nodes, which then establish tunnels between each other. Cross-cluster traffic is forwarded through these gateway nodes.</p>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>CNIs include cross-cluster functionality without needing additional components.</li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Dependent on specific CNIs, cannot achieve communication between different CNIs.</li>
+<li>Cannot handle CIDR overlap; network segments need to be pre-planned.</li>
+<li>Except for Cilium, which implements a complete solution including cross-cluster service discovery and network policies, others only provide basic container network communication.</li>
+<li>Lacks fine-grained control by connecting all cluster container networks at once.</li>
+</ul>
+<h2 id="3-Submariner"><a href="#3-Submariner" class="headerlink" title="3. Submariner"></a>3. Submariner</h2><p>Given the common need for cross-cluster network interconnectivity, similar implementations lead to duplicated efforts among various CNIs. <a target="_blank" rel="noopener" href="https://submariner.io/">Submariner</a>, an independent, cross-cluster network plugin, offers a generic solution capable of connecting clusters with different CNIs into one network. Initially created by engineers at Rancher and now a CNCF Sandbox project with active participation from Red Hat engineers.</p>
+<p><strong>Basic Principle</strong>:</p>
+<p>Submariner selects gateway nodes within the cluster that communicate via VXLAN. Cross-cluster traffic is transmitted through VXLAN. Submariner relies on the CNI to send egress traffic to the host network, which then forwards it. Additionally, Submariner deploys a set of CoreDNS for cross-cluster service discovery and uses a Globalnet Controller to address CIDR overlap issues.</p>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>CNI-agnostic to some extent, allowing the connection of clusters with different CNIs.</li>
+<li>Implements cross-cluster service discovery, supporting service and domain name resolution.</li>
+<li>Supports communication between clusters with overlapping CIDRs, avoiding IP conflicts post-deployment.</li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Not compatible with all CNIs, especially those like macvlan or short-circuiting Cilium where the host cannot see the traffic.</li>
+<li>Gateway operates in active-passive mode, lacking horizontal load balancing, potentially causing performance bottlenecks in high-traffic scenarios.</li>
+<li>Lacks fine-grained control by connecting all cluster container networks at once.</li>
+</ul>
+<h2 id="4-Skupper"><a href="#4-Skupper" class="headerlink" title="4. Skupper"></a>4. Skupper</h2><p><a target="_blank" rel="noopener" href="https://skupper.io/index.html">Skupper</a> is considered the most interesting among the solutions, enabling service-layer network connectivity on demand, avoiding the control issues of complete connectivity. It innovatively uses a layer 7 message queue to achieve this, being entirely independent of the underlying network and CNI, making it very easy to get started. Currently, most contributors are engineers from Red Hat.</p>
+<p><strong>Basic Principle</strong>:</p>
+<p>Unlike the previous solutions that use tunnels to connect container IPs directly, Skupper introduces the concept of VAN (Virtual Application Networks) to connect networks at layer 7. Simply put, instead of directly connecting IPs, it connects services. Conceptually similar to ServiceExporter and ServiceImporter, but predating these community concepts, it was quite innovative at its inception.</p>
+<p>Skupper uses a message queue implementation, forming a large message queue between multiple clusters. Cross-cluster communication packets are sent to this message queue and consumed on the other end. This approach is similar to reverse proxy but implemented with a message queue, making it a very novel idea. Services become message subscription points for consumption, allowing the establishment of a message queue between the server and client as needed, managing and controlling this message path through the message queue concept.</p>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>Excellent CNI compatibility, completely independent of CNI behavior at the application layer for packet connectivity.</li>
+<li>Easy to get started, requiring no complex upfront network planning and no CIDR non-overlap requirements. Provides CLI for temporary testing and quick demonstrations.</li>
+<li>Connects services on demand instead of entire container networks, allowing fine-grained control with lower infrastructure requirements.</li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Currently supports only TCP protocol; UDP and lower-level protocols like ICMP have issues.</li>
+<li>IP information is lost as messages are forwarded through the message queue.</li>
+<li>Using a message queue for forwarding might lead to performance issues like latency and throughput loss.</li>
+<li>Given TCP’s stateful nature, converting it entirely to a message queue form and ensuring compatibility is questionable.</li>
+</ul>
+<h2 id="5-KubeSlice"><a href="#5-KubeSlice" class="headerlink" title="5. KubeSlice"></a>5. KubeSlice</h2><p><a target="_blank" rel="noopener" href="https://kubeslice.io/documentation/open-source/1.3.0">KubeSlice</a> is a project that recently entered the CNCF Sandbox. Solutions based on tunnels cannot achieve fine-grained control and full CNI compatibility, while those based on the application layer cannot fully support network protocols. KubeSlice offers a new approach, attempting to solve both issues simultaneously.</p>
+<p><strong>Basic Principle</strong>:</p>
+<p>KubeSlice’s basic idea is simple and straightforward: dynamically insert a network card into a pod as needed, creating an overlay network for cross-cluster communication on this card. This overlay network then implements service discovery and network policies. Users can dynamically create and join networks across namespaces or pods, achieving flexible fine-grained control. Since it operates on a second network card, it is highly compatible with network protocols.</p>
+<p><strong>Advantages</strong>:</p>
+<ul>
+<li>High CNI compatibility, as it involves adding an extra network card, regardless of the original CNI and avoiding original network address conflicts.</li>
+<li>High protocol compatibility, as it uses an additional network card for traffic forwarding, compatible with all network protocols.</li>
+<li>High flexibility, providing CLI tools for dynamically creating and joining networks, allowing users to create multiple cross-cluster virtual networks as needed.</li>
+<li>Comprehensive functionality, implementing service discovery, DNS, QoS, NetworkPolicy, and monitoring on the additional overlay network.</li>
+</ul>
+<p><strong>Limitations</strong>:</p>
+<ul>
+<li>Applications need to be aware of the additional network card and choose the appropriate network, potentially requiring application modifications.</li>
+<li>Since cross-cluster traffic uses a different network card, not the pod’s primary IP, external systems like monitoring and tracing might require adjustments.</li>
+<li>Documentation appears to be an internal project made open source, with many usage methods and API descriptions not well explained, requiring users to guess parameter meanings from references. Despite seeming comprehensive, the documentation needs significant improvement for external users to use it effectively.</li>
+</ul>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>In a multi-cluster Kubernetes environment, there are multiple solutions for efficient communication. Each solution has its advantages and limitations, allowing users to choose the most suitable one based on specific needs and environments.</p>
 <blockquote>
 <p>This post was originally written in Chinese and I translated it to English with the help of GPT4. If you find any errors, please feel free to let me know.</p>
 </blockquote>
@@ -260,7 +293,7 @@
         <div class="prev-or-next">
           <div class="post-foot-next">
             
-              <a href="/en/2024/03/21/ai-content-to-logseq/" target="_self">
+              <a href="/en/2024/04/18/k8gb-best-cloudnative-gslb/" target="_self">
                 <i class="iconfont icon-chevronleft"></i>
                 <span>Prev</span>
               </a>
@@ -292,11 +325,6 @@
           </div>
           <div class="post-foot-prev">
             
-              <a href="/en/2024/05/24/five-kubernetes-multicluster-network/" target="_self">
-                <span>Next</span>
-                <i class="iconfont icon-chevronright"></i>
-              </a>
-            
           </div>
         </div>
       
@@ -309,7 +337,7 @@
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#What-is-GSLB"><span class="toc-text">What is GSLB</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Problems-with-Other-Solutions"><span class="toc-text">Problems with Other Solutions</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Commercial-Load-Balancers"><span class="toc-text">Commercial Load Balancers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Public-Cloud-Global-Load-Balancers"><span class="toc-text">Public Cloud Global Load Balancers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Karmada-Multi-Cluster-Ingress"><span class="toc-text">Karmada Multi Cluster Ingress</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Simple-DNS-Approach"><span class="toc-text">Simple DNS Approach</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#k8gb%E2%80%99s-Solution"><span class="toc-text">k8gb’s Solution</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Underlay-Network"><span class="toc-text">1. Underlay Network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-Overlay-CNI-Providing-Cross-Cluster-Communication"><span class="toc-text">2. Overlay CNI Providing Cross-Cluster Communication</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-Submariner"><span class="toc-text">3. Submariner</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-Skupper"><span class="toc-text">4. Skupper</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-KubeSlice"><span class="toc-text">5. KubeSlice</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
       
     </div>
   </div>
@@ -679,12 +707,12 @@
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + k8gb%3A%20The%20Best%20Open%20Source%20GSLB%20Solution%20for%20Cloud%20Native + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2024%2F04%2F18%2Fk8gb-best-cloudnative-gslb%2F + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + 5%20Solutions%20for%20Multi-Cluster%20Communication%20in%20Kubernetes + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2024%2F05%2F24%2Ffive-kubernetes-multicluster-network%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2024/04/18/k8gb-best-cloudnative-gslb/" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2024/05/24/five-kubernetes-multicluster-network/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         
