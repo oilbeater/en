@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content="Automatic Shutdown Server under VS Code Remote SSH | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content=" | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content="Automatic Shutdown Server under VS Code Remote SSH | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content=" | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,8 +28,8 @@
   
   <title>
     
-      Automatic Shutdown Server under VS Code Remote SSH 
-      
+      Tag 
+       : Gateway
       
       |
     
@@ -134,219 +134,30 @@
 
 
       <div class="flex-container">
-        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
-<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+        <!-- 标签详情页，展示某个标签下的文章列表，url形式：https://yoursite/tags/某个标签/ -->
 
-
-  <!-- LaTex Display -->
-
+<div class="container tag-details">
+  <div class="content-title">
+    <h2>
+      <span>Gateway</span>
+    </h2>
+  </div>
   
-    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
-  
-  <script>
-    MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']]
-      }
-    }
-  </script>
-
-
-
-
-
-  <!-- clipboard -->
-
-  
-    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
-  
-  
-<script src="/en/js/codeCopy.js"></script>
-
-
-
-
-
-
-
-  
-
-  
-
-  
-
-  
-  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
-  <div class="container post-details" id="post-details">
-    <div class="post-content">
-      <div class="post-title">Automatic Shutdown Server under VS Code Remote SSH</div>
-      <div class="post-attach">
-        <span class="post-pubtime">
-          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2024-08-26 03:18:57
-        </span>
-        
-              <span class="post-tags">
-                <i class="iconfont icon-tags mr-10" title="Tags"></i>
-                
-                <span class="span--tag mr-8">
-                  <a href="/en/tags/vscode/" title="vscode">
-                    #vscode
-                  </a>
-                </span>
-                
-                <span class="span--tag mr-8">
-                  <a href="/en/tags/tools/" title="tools">
-                    #tools
-                  </a>
-                </span>
-                
-                <span class="span--tag mr-8">
-                  <a href="/en/tags/docker/" title="docker">
-                    #docker
-                  </a>
-                </span>
-                
-              </span>
-          
+    <div class="post-list">
+      <div class="post-item" title="AI Gateway Survey: Cloudflare AI Gateway">
+        <span class="time-m-d">2024-08-26</span>
+        <a href="/en/2024/08/26/ai-gateway-cloudflare/">
+          <span>AI Gateway Survey: Cloudflare AI Gateway</span>
+        </a>
       </div>
-      <div class="markdown-body">
-        <p>I have migrated all my development environments to GCP’s Spot Instance and connect using the VS Code Remote SSH plugin. The advantage is that GCP charges by the second, making it cost-effective as long as you shut down promptly, even with high-spec machines. The downside is that forgetting to shut down during holidays can lead to high costs. After losing more than 10 dollars, I decided to find a way to automatically shut down the machine when VS Code is idle. This involved some tricky maneuvers to execute the shutdown command within a Docker container.</p>
-<h1 id="How-to-Determine-Idle-State"><a href="#How-to-Determine-Idle-State" class="headerlink" title="How to Determine Idle State"></a>How to Determine Idle State</h1><p>This feature is similar to the idle timeout in CodeSpace, but the Remote SSH plugin doesn’t expose this functionality, so I had to implement it myself. The main challenge was determining idle state on the server side. I couldn’t find an exposed interface in VS Code, so I wondered if there was a simple way to determine idle state outside of VS Code.</p>
-<p>The most straightforward idea was to monitor SSH connections, as Remote SSH connects via SSH. If there are no active SSH connections on the machine, it can be considered idle and shut down. However, the connection timeout for Remote SSH is quite long, reportedly four hours, and even closing the VS Code client didn’t terminate the server-side SSH connection. Setting a timeout on the server side would lead to quick client reconnection, so the number of connections wouldn’t decrease.</p>
-<p>Since directly monitoring the number of SSH connections wasn’t feasible, I looked into whether it was possible to determine if no traffic under existing SSH connections. Using <code>tcpdump</code>, I found that there were TCP heartbeat packets every second, even without client interaction, so no traffic wasn’t a valid indicator. However, the size of these heartbeat packets was consistently 44 bytes, which could be used to identify idle state—if there were no packets larger than 44 bytes on the SSH port for a certain period, it was considered idle.</p>
-<p>Here’s the first version of the script:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="literal">true</span>; <span class="keyword">do</span></span><br><span class="line">  <span class="keyword">if</span> [ -f /root/dump ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">rm</span> /root/dump</span><br><span class="line">  <span class="keyword">fi</span></span><br><span class="line"></span><br><span class="line">  <span class="built_in">timeout</span> 1m tcpdump -nn -i ens4 tcp and port 22 and greater 50 -w /root/dump</span><br><span class="line"></span><br><span class="line">  line_count=$(<span class="built_in">wc</span> -l &lt; /root/dump)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> [ <span class="variable">$line_count</span> -gt 0 ]; <span class="keyword">then</span></span><br><span class="line">    <span class="built_in">rm</span> /root/dump</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="built_in">rm</span> /root/dump</span><br><span class="line">    shutdown -h now</span><br><span class="line">  <span class="keyword">fi</span></span><br><span class="line"><span class="keyword">done</span></span><br></pre></td></tr></table></figure>
-
-<p>This script achieves the functionality of shutting down the machine if there are no non-heartbeat packets on the SSH port within one minute. The next step was to automate this script’s execution.</p>
-<h1 id="Docker-Dark-Magic"><a href="#Docker-Dark-Magic" class="headerlink" title="Docker Dark Magic"></a>Docker Dark Magic</h1><p>When packaging the script into a Docker image, I encountered an interesting issue: none of the base images contained the <code>shutdown</code> command, nor could it be easily installed. To execute the <code>shutdown</code> command on the host, it was necessary to switch to the host’s namespace from within the Docker container:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">nsenter -a -t 1 shutdown -h now</span><br></pre></td></tr></table></figure>
-
-<p>The <code>nsenter</code> command targets the process with Pid 1 and enters all its namespaces (pid, mount, network), making it appear as if operating directly on the host when Docker runs in the shared host Pid mode. To run the container with this capability, use the following command:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run --name=close --pid=host --network=host --privileged --restart=always -d close:v0.0.1</span><br></pre></td></tr></table></figure>
-
-<h1 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h1><p>By monitoring SSH traffic, we can infer if VS Code is idle and then use some Docker “dark magic” to achieve automatic shutdown. However, this method is quite complex; is there a simpler way?</p>
-
-      </div>
-      
-        <div class="prev-or-next">
-          <div class="post-foot-next">
-            
-              <a href="/en/2024/03/04/golang-slice-performance-cont/" target="_self">
-                <i class="iconfont icon-chevronleft"></i>
-                <span>Prev</span>
-              </a>
-            
-          </div>
-          <div class="post-attach">
-            <span class="post-pubtime">
-              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2024-08-26 03:18:57
-            </span>
-            
-                  <span class="post-tags">
-                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
-                    
-                    <span class="span--tag mr-8">
-                      <a href="/en/tags/vscode/" title="vscode">
-                        #vscode
-                      </a>
-                    </span>
-                    
-                    <span class="span--tag mr-8">
-                      <a href="/en/tags/tools/" title="tools">
-                        #tools
-                      </a>
-                    </span>
-                    
-                    <span class="span--tag mr-8">
-                      <a href="/en/tags/docker/" title="docker">
-                        #docker
-                      </a>
-                    </span>
-                    
-                  </span>
-              
-          </div>
-          <div class="post-foot-prev">
-            
-              <a href="/en/2024/03/21/ai-content-to-logseq/" target="_self">
-                <span>Next</span>
-                <i class="iconfont icon-chevronright"></i>
-              </a>
-            
-          </div>
-        </div>
-      
     </div>
-    
-  <div id="btn-catalog" class="btn-catalog">
-    <i class="iconfont icon-catalog"></i>
-  </div>
-  <div class="post-catalog hidden" id="catalog">
-    <div class="title">Contents</div>
-    <div class="catalog-content">
-      
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#How-to-Determine-Idle-State"><span class="toc-text">How to Determine Idle State</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Docker-Dark-Magic"><span class="toc-text">Docker Dark Magic</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li></ol>
-      
-    </div>
-  </div>
-
   
-<script src="/en/js/catalog.js"></script>
-
-
-
-
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9141929305076734"
-     crossorigin="anonymous"></script>
-<!-- 横向广告 -->
-<ins class="adsbygoogle"
-     style="display:block"
-     data-ad-client="ca-pub-9141929305076734"
-     data-ad-slot="3076777751"
-     data-ad-format="auto"
-     data-full-width-responsive="true"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+  <nav class="post-navigation">
     
-      <div class="comments-container">
-        
-
-
-
-
-
-
-  <div id="gitalk-container"></div>
-
-  <script>
-    function loadGitalkSuc() {
-      const gitalk = new Gitalk({
-        clientID: 'fa956f38daf8cc1f8222',
-        clientSecret: '8e37dcda7dc6d86518fc00b06f8d7008ef8542c6',
-        repo: 'oilbeater.github.com',
-        owner: 'oilbeater',
-        admin: ['oilbeater'],
-        id: location.pathname,
-        distractionFreeMode: false
-      })
-
-      gitalk.render('gitalk-container')
-    }
-  </script>
-  
-    <link rel="stylesheet" href="/plugins/gitalk.css">
-    <script type="text/javascript" src="/plugins/gitalk.min.js" onload="loadGitalkSuc(this)"></script>
-  
-
-
-
-      </div>
+    <span class="page-num">1 / 1</span>
     
-  </div>
-
+  </nav>
+</div>
 
         
 <div class="footer">
@@ -650,24 +461,6 @@
 
 
         
-  
-    <div class="share-icon tools-bar-item">
-      <a href="javascript: void(0)" id="share-icon">
-        <i class="iconfont iconshare"></i>
-      </a>
-      <div class="share-content hidden">
-        
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Automatic%20Shutdown%20Server%20under%20VS%20Code%20Remote%20SSH + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2024%2F03%2F13%2Fshutdown-remote-ssh-server%2F + '" target="_blank" title="Twitter">
-            <i class="iconfont icon-twitter"></i>
-          </a>
-        
-        
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2024/03/13/shutdown-remote-ssh-server/" target="_blank" title="Facebook">
-            <i class="iconfont icon-facebooksquare"></i>
-          </a>
-        
-      </div>
-    </div>
   
   
 <script src="/en/js/shares.js"></script>
