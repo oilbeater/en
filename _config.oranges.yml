@@ -162,10 +162,7 @@ footer:
       name: linkedin
       icon: linkedin
       path: https://www.linkedin.com/in/oilbeater/
-    -
-      name: telegram
-      icon: telegram
-      path: https://t.me/oilbeater_studyroom
+
     # -
     #   name: weibo
     #   icon: weibo
