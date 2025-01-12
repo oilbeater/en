@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="Extending KubeVirt Through the Network Binding Plugin | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="Extending KubeVirt Through the Network Binding Plugin | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,8 +28,8 @@
   
   <title>
     
-      Tag 
-       : network
+      Extending KubeVirt Through the Network Binding Plugin 
+      
       
       |
     
@@ -134,39 +134,207 @@
 
 
       <div class="flex-container">
-        <!-- 标签详情页，展示某个标签下的文章列表，url形式：https://yoursite/tags/某个标签/ -->
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
 
-<div class="container tag-details">
-  <div class="content-title">
-    <h2>
-      <span>network</span>
-    </h2>
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/en/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Extending KubeVirt Through the Network Binding Plugin</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-01-12 08:39:45
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/kubevirt/" title="kubevirt">
+                    #kubevirt
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/networking/" title="networking">
+                    #networking
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>In the new KubeVirt v1.4 release, the <a target="_blank" rel="noopener" href="https://kubevirt.io/user-guide/network/network_binding_plugins/">Network Binding Plugin</a> has been elevated to Beta, offering a new way to extend KubeVirt’s networking capabilities. Although it is nominally designed to enhance networking, in practice, this mechanism can do much more. Any changes related to the libvirt domain XML can be implemented through this mechanism.</p>
+<h2 id="KubeVirt-Network-Overview"><a href="#KubeVirt-Network-Overview" class="headerlink" title="KubeVirt Network Overview"></a>KubeVirt Network Overview</h2><p>First, let’s examine the existing networking mechanisms in KubeVirt and identify their shortcomings, as well as how the new mechanism facilitates extensions.</p>
+<p>Since KubeVirt uses an architecture where VMs run inside Pods, it reuses the CNI networking mechanism. This approach divides networking into two parts: one is the Pod network provided by various CNIs, and the other is how the CNI-provided network is connected to the VM. In libvirt, this part is referred to as the Domain network.</p>
+<p>KubeVirt’s previous networking mechanisms (Bridge, Masquerade, Passt, Slirp) essentially connect the Pod’s <code>eth0</code> interface to the VM’s <code>tap0</code> network interface using different technical solutions. For example, Bridge connects <code>tap0</code> and <code>eth0</code> to the same bridge, Masquerade routes <code>tap0</code> traffic through iptables NAT rules into <code>eth0</code>, and Passt and Slirp perform traffic redirection via a user-space network stack.</p>
+<p><img src="/en/../images/kubevirt-networking-tradition.png" alt="alt text"></p>
+<p>These methods are similar in implementation: they perform some network-related configurations inside the Pod and then modify libvirt’s startup parameters to connect to the respective network. However, the existing mechanisms are hardcoded into KubeVirt Core and lack an extension mechanism. Adding a new mechanism or modifying an existing one requires altering KubeVirt’s code, which is inflexible. For instance, the default bridge plugin hijacks DHCP requests but does not support IPv6, making dual-stack configurations under bridge mode difficult to achieve. Additionally, the DHCP implemented in Kube-OVN is bypassed by this mechanism. Previously, enabling dual-stack bridge required modifying KubeVirt’s code to disable the default DHCP, which was cumbersome. Therefore, the new version abstracts this set of mechanisms to provide a universal extension framework.</p>
+<h2 id="Hook-Sidecar"><a href="#Hook-Sidecar" class="headerlink" title="Hook Sidecar"></a>Hook Sidecar</h2><p>Let’s first look at an existing extension mechanism in KubeVirt: the <a target="_blank" rel="noopener" href="https://kubevirt.io/user-guide/user_workloads/hook-sidecar/">Hook Sidecar</a>.</p>
+<p>This mechanism allows loading a user-defined image or a Shell&#x2F;Python script stored in a ConfigMap before the VM is officially created. It modifies libvirt’s startup parameters and cloud-init parameters before the VM starts.</p>
+<p>Its execution mechanism is somewhat similar to CNI. Before starting a VM, <code>virt-handler</code> searches the corresponding directory for two binaries: <code>/usr/bin/onDefineDomain</code> and <code>/usr/bin/preCloudInitIso</code>. The former takes the libvirt XML configuration generated by <code>virt-handler</code> as input and returns the modified configuration; the latter takes the cloud-init configuration and returns the modified cloud-init configuration. This way, any libvirt and cloud-init parameters not natively supported by KubeVirt can be injected and modified through this mechanism. Moreover, since the Sidecar can execute arbitrary code, it can do much more than just modify these two configurations. Any capabilities not implemented by KubeVirt during the initialization phase can be realized here.</p>
+<h2 id="Network-Binding-Plugin"><a href="#Network-Binding-Plugin" class="headerlink" title="Network Binding Plugin"></a>Network Binding Plugin</h2><p>Now let’s discuss the Network Binding Plugin mechanism, which is fundamentally similar to the Hook Sidecar. The main difference is that it replaces binary calls with gRPC calls. The methods registered in gRPC remain <code>onDefineDomain</code> and <code>preCloudInitIso</code>, but the parameters are passed through gRPC requests instead of command-line arguments. Everything else remains the same.</p>
+<p>A specific example can be found in the <a target="_blank" rel="noopener" href="https://github.com/kubevirt/kubevirt/tree/main/cmd/sidecars/network-slirp-binding">Slirp Binding</a> implementation, which is still part of the KubeVirt codebase. Although the Network Binding Plugin specification has added a <code>networkAttachmentDefinition</code> field to select a CNI, this can still be achieved using the previous network interface selection mechanism. Furthermore, since the Sidecar can execute arbitrary code, it is also possible to implement a CNI within the Sidecar to override the Pod’s original network.</p>
+<p>The resulting network architecture is depicted in the diagram below:</p>
+<p><img src="/en/../images/networking-binding.png" alt="alt text"></p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>Although the Network Binding Plugin mechanism is designed for network extensions, it can actually extend almost all processing logic on the <code>virt-handler</code> side of KubeVirt. It even allows treating KubeVirt as merely a framework, with all logic handled through Sidecars. This flexibility is expected to enable numerous innovative uses in the future.</p>
+<h2 id="References"><a href="#References" class="headerlink" title="References"></a>References</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://kubevirt.io/user-guide/user_workloads/hook-sidecar/">Hook Sidecar</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubevirt.io/user-guide/network/network_binding_plugins/">Network Binding Plugins</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubevirt/kubevirt/blob/main/docs/network/network-binding-plugin.md">Network Binding Plugin Documentation</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/kubevirt/kubevirt/tree/main/cmd/sidecars/network-slirp-binding">Slirp Binding Implementation</a></li>
+</ul>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/en/2024/08/26/ai-gateway-cloudflare/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-01-12 08:39:45
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/kubevirt/" title="kubevirt">
+                        #kubevirt
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/networking/" title="networking">
+                        #networking
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
+        </div>
+      
+    </div>
+    
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
   </div>
-  
-    <div class="post-list">
-      <div class="post-item" title="5 Solutions for Multi-Cluster Communication in Kubernetes">
-        <span class="time-m-d">2024-05-24</span>
-        <a href="/en/2024/05/24/five-kubernetes-multicluster-network/">
-          <span>5 Solutions for Multi-Cluster Communication in Kubernetes</span>
-        </a>
-      </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#KubeVirt-Network-Overview"><span class="toc-text">KubeVirt Network Overview</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Hook-Sidecar"><span class="toc-text">Hook Sidecar</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Network-Binding-Plugin"><span class="toc-text">Network Binding Plugin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#References"><span class="toc-text">References</span></a></li></ol>
+      
     </div>
+  </div>
+
   
-    <div class="post-list">
-      <div class="post-item" title="k8gb: The Best Open Source GSLB Solution for Cloud Native">
-        <span class="time-m-d">2024-04-18</span>
-        <a href="/en/2024/04/18/k8gb-best-cloudnative-gslb/">
-          <span>k8gb: The Best Open Source GSLB Solution for Cloud Native</span>
-        </a>
+<script src="/en/js/catalog.js"></script>
+
+
+
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9141929305076734"
+     crossorigin="anonymous"></script>
+<!-- 横向广告 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-9141929305076734"
+     data-ad-slot="3076777751"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+    
+      <div class="comments-container">
+        
+
+
+
+
+
+
+  <div id="gitalk-container"></div>
+
+  <script>
+    function loadGitalkSuc() {
+      const gitalk = new Gitalk({
+        clientID: 'fa956f38daf8cc1f8222',
+        clientSecret: '8e37dcda7dc6d86518fc00b06f8d7008ef8542c6',
+        repo: 'oilbeater.github.com',
+        owner: 'oilbeater',
+        admin: ['oilbeater'],
+        id: location.pathname,
+        distractionFreeMode: false
+      })
+
+      gitalk.render('gitalk-container')
+    }
+  </script>
+  
+    <link rel="stylesheet" href="/plugins/gitalk.css">
+    <script type="text/javascript" src="/plugins/gitalk.min.js" onload="loadGitalkSuc(this)"></script>
+  
+
+
+
       </div>
-    </div>
-  
-  <nav class="post-navigation">
     
-    <span class="page-num">1 / 1</span>
-    
-  </nav>
-</div>
+  </div>
+
 
         
 <div class="footer">
@@ -470,6 +638,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Extending%20KubeVirt%20Through%20the%20Network%20Binding%20Plugin + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F01%2F12%2Fkubevirt-networking%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/01/12/kubevirt-networking/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/en/js/shares.js"></script>
