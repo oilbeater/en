@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content="5 Solutions for Multi-Cluster Communication in Kubernetes | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="DeepSeek MoE -- An Innovative MoE Architecture | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content="5 Solutions for Multi-Cluster Communication in Kubernetes | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="DeepSeek MoE -- An Innovative MoE Architecture | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,7 +28,7 @@
   
   <title>
     
-      5 Solutions for Multi-Cluster Communication in Kubernetes 
+      DeepSeek MoE -- An Innovative MoE Architecture 
       
       
       |
@@ -179,7 +179,7 @@
   <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
   <div class="container post-details" id="post-details">
     <div class="post-content">
-      <div class="post-title">5 Solutions for Multi-Cluster Communication in Kubernetes</div>
+      <div class="post-title">DeepSeek MoE -- An Innovative MoE Architecture</div>
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
@@ -190,14 +190,20 @@
                 <i class="iconfont icon-tags mr-10" title="Tags"></i>
                 
                 <span class="span--tag mr-8">
-                  <a href="/en/tags/kubernetes/" title="kubernetes">
-                    #kubernetes
+                  <a href="/en/tags/DeepSeek/" title="DeepSeek">
+                    #DeepSeek
                   </a>
                 </span>
                 
                 <span class="span--tag mr-8">
-                  <a href="/en/tags/network/" title="network">
-                    #network
+                  <a href="/en/tags/LLM/" title="LLM">
+                    #LLM
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/Paper/" title="Paper">
+                    #Paper
                   </a>
                 </span>
                 
@@ -205,95 +211,35 @@
           
       </div>
       <div class="markdown-body">
-        <p>As enterprises scale their operations, the use of Kubernetes extends from single-cluster to multi-cluster deployments. In a multi-cluster environment, communication between clusters becomes a critical area of research. This article introduces the basic principles, advantages, and limitations of five solutions for cross-Kubernetes cluster communication.</p>
-<h2 id="1-Underlay-Network"><a href="#1-Underlay-Network" class="headerlink" title="1. Underlay Network"></a>1. Underlay Network</h2><p>This type of network plugin includes <a target="_blank" rel="noopener" href="https://www.cni.dev/plugins/current/main/macvlan/">macvlan</a>, <a target="_blank" rel="noopener" href="https://www.cni.dev/plugins/current/main/ipvlan/">ipvlan</a>, <a target="_blank" rel="noopener" href="https://kubeovn.github.io/docs/stable/start/underlay/">Kube-OVN underlay</a>, and various cloud VPC CNIs.</p>
-<p><strong>Basic Principle</strong>:</p>
-<p>From the CNI (Container Network Interface) perspective, the underlay network is the simplest approach. This method relies on the underlying infrastructure to achieve connectivity at the network level, such as using VPC Peering on public clouds or configuring routing and large Layer 2 networks in physical networks. Once the underlying network is connected, cross-cluster container networks naturally connect.</p>
-<p><strong>Advantages</strong>:</p>
+        <p>Those who have been following DeepSeek’s work since DeepSeek V3&#x2F;R1 might easily think that a significant portion of DeepSeek’s efforts are focused on engineering optimizations for efficiency. However, reviewing DeepSeek’s papers over the past year reveals that they have actually been continuously innovating in model architecture and training methods, with V3 and R1 being scaled versions based on previous architectural innovations. The DeepSeek MoE paper introduces the main innovations in MoE architecture by DeepSeek, which currently appears promising and could potentially become the standard for future MoE architectures.</p>
+<h2 id="MoE-vs-Dense"><a href="#MoE-vs-Dense" class="headerlink" title="MoE vs Dense"></a>MoE vs Dense</h2><p>First, let’s discuss the differences between MoE and traditional Dense architectures. Early LLMs were mostly based on Dense architectures, where every token generation requires activating all neurons for computation. This approach is quite different from how the human brain operates, as the brain doesn’t need to engage all brain cells for every problem. If it did, humans would be exhausted. Therefore, a natural idea is to no longer activate all neurons when generating tokens, but instead activate only those most relevant to the current task. This led to the MoE (Mixture of Experts) architecture, which divides neurons in each layer of the LLM into N Experts, with a Router selecting the K most relevant Experts to activate.</p>
+<p><img src="/en/../images/20250329161016.png"></p>
+<p>The benefit of this architecture is that during inference, not all neurons need to be activated, significantly reducing computational effort. In the most common 8-choose-2 mode before DeepSeek MoE, the computational load can be reduced to nearly one-third of a Dense model.</p>
+<p>While the MoE architecture seems ideal, it essentially uses a few Experts to mimic the performance of a Dense model. The key lies in whether each Expert is specialized enough to truly mimic the Dense model’s performance. If we compare it to the human brain, when neurons are sufficiently specialized, specific tasks can be completed by activating only a few neurons.</p>
+<p>The DeepSeek MoE paper introduces two innovations they made to push the specialization of each Expert to the extreme:</p>
 <ul>
-<li>Simplest from a CNI perspective, requiring no additional operations.</li>
-<li>Architecturally clear, delegating the responsibility of cross-cluster communication to the underlying network.</li>
+<li>More and smaller Experts</li>
+<li>Knowledge-sharing Experts</li>
 </ul>
-<p><strong>Limitations</strong>:</p>
-<ul>
-<li>Depends on specific CNI; underlay networks have limited use cases, and some scenarios can only use overlay networks.</li>
-<li>Difficulties in heterogeneous environments, such as between multiple clouds or between public and private clouds.</li>
-<li>Provides only basic container network communication without higher-level functionalities like service discovery, domain names, and network policies.</li>
-<li>Lacks fine-grained control by connecting all cluster container networks at once.</li>
-</ul>
-<h2 id="2-Overlay-CNI-Providing-Cross-Cluster-Communication"><a href="#2-Overlay-CNI-Providing-Cross-Cluster-Communication" class="headerlink" title="2. Overlay CNI Providing Cross-Cluster Communication"></a>2. Overlay CNI Providing Cross-Cluster Communication</h2><p>When underlay networks cannot be used, some specific CNIs achieve cross-cluster communication at the overlay level, such as <a target="_blank" rel="noopener" href="https://cilium.io/use-cases/cluster-mesh/">Cilium Cluster Mesh</a>, <a target="_blank" rel="noopener" href="https://antrea.io/docs/v2.0.0/docs/multicluster/quick-start/">Antrea Multi-Cluster</a>, and <a target="_blank" rel="noopener" href="https://kubeovn.github.io/docs/stable/en/advance/with-ovn-ic/">Kube-OVN with ovn-ic</a>.</p>
-<p><strong>Basic Principle</strong>:</p>
-<p>These CNIs typically select a set of nodes within the cluster as gateway nodes, which then establish tunnels between each other. Cross-cluster traffic is forwarded through these gateway nodes.</p>
-<p><strong>Advantages</strong>:</p>
-<ul>
-<li>CNIs include cross-cluster functionality without needing additional components.</li>
-</ul>
-<p><strong>Limitations</strong>:</p>
-<ul>
-<li>Dependent on specific CNIs, cannot achieve communication between different CNIs.</li>
-<li>Cannot handle CIDR overlap; network segments need to be pre-planned.</li>
-<li>Except for Cilium, which implements a complete solution including cross-cluster service discovery and network policies, others only provide basic container network communication.</li>
-<li>Lacks fine-grained control by connecting all cluster container networks at once.</li>
-</ul>
-<h2 id="3-Submariner"><a href="#3-Submariner" class="headerlink" title="3. Submariner"></a>3. Submariner</h2><p>Given the common need for cross-cluster network interconnectivity, similar implementations lead to duplicated efforts among various CNIs. <a target="_blank" rel="noopener" href="https://submariner.io/">Submariner</a>, an independent, cross-cluster network plugin, offers a generic solution capable of connecting clusters with different CNIs into one network. Initially created by engineers at Rancher and now a CNCF Sandbox project with active participation from Red Hat engineers.</p>
-<p><strong>Basic Principle</strong>:</p>
-<p>Submariner selects gateway nodes within the cluster that communicate via VXLAN. Cross-cluster traffic is transmitted through VXLAN. Submariner relies on the CNI to send egress traffic to the host network, which then forwards it. Additionally, Submariner deploys a set of CoreDNS for cross-cluster service discovery and uses a Globalnet Controller to address CIDR overlap issues.</p>
-<p><strong>Advantages</strong>:</p>
-<ul>
-<li>CNI-agnostic to some extent, allowing the connection of clusters with different CNIs.</li>
-<li>Implements cross-cluster service discovery, supporting service and domain name resolution.</li>
-<li>Supports communication between clusters with overlapping CIDRs, avoiding IP conflicts post-deployment.</li>
-</ul>
-<p><strong>Limitations</strong>:</p>
-<ul>
-<li>Not compatible with all CNIs, especially those like macvlan or short-circuiting Cilium where the host cannot see the traffic.</li>
-<li>Gateway operates in active-passive mode, lacking horizontal load balancing, potentially causing performance bottlenecks in high-traffic scenarios.</li>
-<li>Lacks fine-grained control by connecting all cluster container networks at once.</li>
-</ul>
-<h2 id="4-Skupper"><a href="#4-Skupper" class="headerlink" title="4. Skupper"></a>4. Skupper</h2><p><a target="_blank" rel="noopener" href="https://skupper.io/index.html">Skupper</a> is considered the most interesting among the solutions, enabling service-layer network connectivity on demand, avoiding the control issues of complete connectivity. It innovatively uses a layer 7 message queue to achieve this, being entirely independent of the underlying network and CNI, making it very easy to get started. Currently, most contributors are engineers from Red Hat.</p>
-<p><strong>Basic Principle</strong>:</p>
-<p>Unlike the previous solutions that use tunnels to connect container IPs directly, Skupper introduces the concept of VAN (Virtual Application Networks) to connect networks at layer 7. Simply put, instead of directly connecting IPs, it connects services. Conceptually similar to ServiceExporter and ServiceImporter, but predating these community concepts, it was quite innovative at its inception.</p>
-<p>Skupper uses a message queue implementation, forming a large message queue between multiple clusters. Cross-cluster communication packets are sent to this message queue and consumed on the other end. This approach is similar to reverse proxy but implemented with a message queue, making it a very novel idea. Services become message subscription points for consumption, allowing the establishment of a message queue between the server and client as needed, managing and controlling this message path through the message queue concept.</p>
-<p><strong>Advantages</strong>:</p>
-<ul>
-<li>Excellent CNI compatibility, completely independent of CNI behavior at the application layer for packet connectivity.</li>
-<li>Easy to get started, requiring no complex upfront network planning and no CIDR non-overlap requirements. Provides CLI for temporary testing and quick demonstrations.</li>
-<li>Connects services on demand instead of entire container networks, allowing fine-grained control with lower infrastructure requirements.</li>
-</ul>
-<p><strong>Limitations</strong>:</p>
-<ul>
-<li>Currently supports only TCP protocol; UDP and lower-level protocols like ICMP have issues.</li>
-<li>IP information is lost as messages are forwarded through the message queue.</li>
-<li>Using a message queue for forwarding might lead to performance issues like latency and throughput loss.</li>
-<li>Given TCP’s stateful nature, converting it entirely to a message queue form and ensuring compatibility is questionable.</li>
-</ul>
-<h2 id="5-KubeSlice"><a href="#5-KubeSlice" class="headerlink" title="5. KubeSlice"></a>5. KubeSlice</h2><p><a target="_blank" rel="noopener" href="https://kubeslice.io/documentation/open-source/1.3.0">KubeSlice</a> is a project that recently entered the CNCF Sandbox. Solutions based on tunnels cannot achieve fine-grained control and full CNI compatibility, while those based on the application layer cannot fully support network protocols. KubeSlice offers a new approach, attempting to solve both issues simultaneously.</p>
-<p><strong>Basic Principle</strong>:</p>
-<p>KubeSlice’s basic idea is simple and straightforward: dynamically insert a network card into a pod as needed, creating an overlay network for cross-cluster communication on this card. This overlay network then implements service discovery and network policies. Users can dynamically create and join networks across namespaces or pods, achieving flexible fine-grained control. Since it operates on a second network card, it is highly compatible with network protocols.</p>
-<p><strong>Advantages</strong>:</p>
-<ul>
-<li>High CNI compatibility, as it involves adding an extra network card, regardless of the original CNI and avoiding original network address conflicts.</li>
-<li>High protocol compatibility, as it uses an additional network card for traffic forwarding, compatible with all network protocols.</li>
-<li>High flexibility, providing CLI tools for dynamically creating and joining networks, allowing users to create multiple cross-cluster virtual networks as needed.</li>
-<li>Comprehensive functionality, implementing service discovery, DNS, QoS, NetworkPolicy, and monitoring on the additional overlay network.</li>
-</ul>
-<p><strong>Limitations</strong>:</p>
-<ul>
-<li>Applications need to be aware of the additional network card and choose the appropriate network, potentially requiring application modifications.</li>
-<li>Since cross-cluster traffic uses a different network card, not the pod’s primary IP, external systems like monitoring and tracing might require adjustments.</li>
-<li>Documentation appears to be an internal project made open source, with many usage methods and API descriptions not well explained, requiring users to guess parameter meanings from references. Despite seeming comprehensive, the documentation needs significant improvement for external users to use it effectively.</li>
-</ul>
-<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>In a multi-cluster Kubernetes environment, there are multiple solutions for efficient communication. Each solution has its advantages and limitations, allowing users to choose the most suitable one based on specific needs and environments.</p>
-<blockquote>
-<p>This post was originally written in Chinese and I translated it to English with the help of GPT4. If you find any errors, please feel free to let me know.</p>
-</blockquote>
+<h2 id="More-and-Smaller-Experts"><a href="#More-and-Smaller-Experts" class="headerlink" title="More and Smaller Experts"></a>More and Smaller Experts</h2><p><img src="/en/../images/20250329165838.png"></p>
+<p>Using more and smaller Experts to increase the specialization of each Expert seems to be a straightforward approach. However, previous mainstream MoE architectures typically used 8 or 16 Experts. Given the myriad types of problems LLMs need to handle, this number of Experts clearly cannot achieve high specialization, resulting in each Expert having a lot of irrelevant knowledge for the current task.</p>
+<p>However, as the number of Experts increases, training difficulty also rises, and the Router can easily end up selecting only a few Experts, leading to extreme load imbalance. Ultimately, the theoretical MoE architecture might end up activating the same small group of Experts each time, effectively turning into a small model. Therefore, most previous MoE architectures did not have a large number of Experts.</p>
+<p>DeepSeek designed a set of loss functions that penalize repeatedly selecting the same Expert, thereby forcing the Router to more evenly distribute the selection of Experts. This approach solved the training problem, allowing DeepSeek to gradually scale the number of Experts. From 64 choose 6 in this paper, to 128 choose 12, to 160 choose 6 in V2, and finally to 256 choose 8 in V3.</p>
+<p>It’s evident that DeepSeek has progressively expanded the number of Experts, and the proportion of Experts needed to be selected has also decreased from 9% to 2%, proving that with sufficiently specialized Experts, fewer activations are needed to complete corresponding tasks.</p>
+<h2 id="Knowledge-sharing-Experts"><a href="#Knowledge-sharing-Experts" class="headerlink" title="Knowledge-sharing Experts"></a>Knowledge-sharing Experts</h2><p><img src="/en/../images/20250329170955.png"></p>
+<p>As Experts become smaller and their number increases, another issue arises: each Expert needs not only specific domain knowledge but also some general knowledge, such as general language understanding and logical analysis, which might be required by every Expert. If each Expert memorizes this knowledge, it leads to significant knowledge redundancy, which becomes more pronounced as the number of Experts increases. This can limit the specialization of each Expert and lead to resource waste during training and inference.</p>
+<p>DeepSeek’s solution is to add a set of shared Experts, which are activated for every training sample. They aim for these shared Experts to learn general knowledge during training, so other Experts don’t need to learn this general knowledge and can focus on specialized knowledge. During inference, these shared Experts are also activated each time to provide general knowledge information.</p>
+<p>This is another intuitive architectural innovation. However, since the Expert scale in previous MoE architectures was not large, the significance of this optimization was not apparent. Only when the scale increases does this problem become apparent. In this paper, DeepSeek scaled the number of shared Experts proportionally with the number of Experts. However, with more training and practice, they found that not so many shared Experts were needed, and by V3, only one shared Expert was used.</p>
+<h2 id="Reflections"><a href="#Reflections" class="headerlink" title="Reflections"></a>Reflections</h2><p>After reading this paper, my biggest takeaway is that DeepSeek is not blindly stacking data with an already validated architecture but is genuinely innovating at the model level. This has resulted in many frameworks being unable to run DeepSeek’s models or having poor performance immediately after the V3&#x2F;R1 boom, as DeepSeek’s model architecture is significantly different from others.</p>
+<p>Moreover, unlike the innovations like MLA, GRPO, and NSA mentioned in other DeepSeek papers, which require complex mathematical skills, these two model innovations are relatively intuitive. However, at that time, only DeepSeek dared to try this approach, while others were still following Llama’s Dense model. Having the courage to make unconventional attempts requires a lot of bravery, and here I can only once again express my respect to the DeepSeek team.</p>
+<p><img src="/en/../images/20250329200735.png"></p>
 
       </div>
       
         <div class="prev-or-next">
           <div class="post-foot-next">
             
-              <a href="/en/2024/04/18/k8gb-best-cloudnative-gslb/" target="_self">
+              <a href="/en/2025/03/14/from-deepseek-llm-to-r1-1/" target="_self">
                 <i class="iconfont icon-chevronleft"></i>
                 <span>Prev</span>
               </a>
@@ -309,14 +255,20 @@
                     <i class="iconfont icon-tags mr-10" title="Tags"></i>
                     
                     <span class="span--tag mr-8">
-                      <a href="/en/tags/kubernetes/" title="kubernetes">
-                        #kubernetes
+                      <a href="/en/tags/DeepSeek/" title="DeepSeek">
+                        #DeepSeek
                       </a>
                     </span>
                     
                     <span class="span--tag mr-8">
-                      <a href="/en/tags/network/" title="network">
-                        #network
+                      <a href="/en/tags/LLM/" title="LLM">
+                        #LLM
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/Paper/" title="Paper">
+                        #Paper
                       </a>
                     </span>
                     
@@ -324,11 +276,6 @@
               
           </div>
           <div class="post-foot-prev">
-            
-              <a href="/en/2024/08/26/ai-gateway-cloudflare/" target="_self">
-                <span>Next</span>
-                <i class="iconfont icon-chevronright"></i>
-              </a>
             
           </div>
         </div>
@@ -342,7 +289,7 @@
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-Underlay-Network"><span class="toc-text">1. Underlay Network</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-Overlay-CNI-Providing-Cross-Cluster-Communication"><span class="toc-text">2. Overlay CNI Providing Cross-Cluster Communication</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-Submariner"><span class="toc-text">3. Submariner</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-Skupper"><span class="toc-text">4. Skupper</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-KubeSlice"><span class="toc-text">5. KubeSlice</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#MoE-vs-Dense"><span class="toc-text">MoE vs Dense</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#More-and-Smaller-Experts"><span class="toc-text">More and Smaller Experts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Knowledge-sharing-Experts"><span class="toc-text">Knowledge-sharing Experts</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Reflections"><span class="toc-text">Reflections</span></a></li></ol>
       
     </div>
   </div>
@@ -712,12 +659,12 @@
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + 5%20Solutions%20for%20Multi-Cluster%20Communication%20in%20Kubernetes + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2024%2F05%2F24%2Ffive-kubernetes-multicluster-network%2F + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + DeepSeek%20MoE%20--%20An%20Innovative%20MoE%20Architecture + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F03%2F29%2Fdeepseek-moe%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2024/05/24/five-kubernetes-multicluster-network/" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/03/29/deepseek-moe/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         
