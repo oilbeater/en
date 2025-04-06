@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="Chaos in Llama 4 | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="Chaos in Llama 4 | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,7 +28,7 @@
   
   <title>
     
-      archive_a: 2024 
+      Chaos in Llama 4 
       
       
       |
@@ -134,138 +134,235 @@
 
 
       <div class="flex-container">
-        <!-- 归档页，展示本站所有文章，按照年份降序归类，url形式：https://yoursite/archives/ -->
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
 
-<!-- last: 按年份把文章分组，当前遍历到的年份 -->
-<!-- now: 当前遍历到的文章的发布年份 -->
 
-<div class="container archives">
-  <div class="post-list">
-    
-        <!-- 后续文章的发布年份呈现 -->
-        <div class="content-title">
-          <h2>
-            <span>2025</span>
-          </h2>
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/en/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">Chaos in Llama 4</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-04-06 16:28:50
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/LLM/" title="LLM">
+                    #LLM
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/Llama/" title="Llama">
+                    #Llama
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>A while ago, the departure of Meta AI’s head raised suspicions about issues with the progress of Llama 4. However, just two days later, Meta released Llama 4, seemingly to dispel rumors. Yet, after reviewing the basic information of the models that have been published, I feel that the Llama project is now in extreme disarray. Below is my analysis based on the available information, and I welcome any corrections.</p>
+<h2 id="Model-Basic-Information"><a href="#Model-Basic-Information" class="headerlink" title="Model Basic Information"></a>Model Basic Information</h2><p>Llama has officially released a 109B and a 400B parameter model this time, along with information about an unreleased 2T parameter model. I have summarized the key architectural details below. All information is sourced from Llama’s blog and the huggingface model page:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Parameters</th>
+<th>Activated Parameters</th>
+<th>Experts</th>
+<th>Context</th>
+<th>Corpus Size</th>
+<th>GPU Time</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Scout</td>
+<td>109B</td>
+<td>17B</td>
+<td>16</td>
+<td>10M</td>
+<td>40T</td>
+<td>5.0M</td>
+</tr>
+<tr>
+<td>Maverick</td>
+<td>400B</td>
+<td>17B</td>
+<td>128+1</td>
+<td>1M</td>
+<td>22T</td>
+<td>2.38M</td>
+</tr>
+<tr>
+<td>Behemoth</td>
+<td>2T</td>
+<td>288B</td>
+<td>16</td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+</tr>
+</tbody></table>
+<p>There’s no need to look at the model’s scoring performance anymore. The comparison of these models’ architectures reveals many issues.</p>
+<h2 id="Strange-MoE-Architecture"><a href="#Strange-MoE-Architecture" class="headerlink" title="Strange MoE Architecture"></a>Strange MoE Architecture</h2><p>Llama 4 has fully transitioned from Dense models to MoE this time, but the bizarre part is that they have adopted two different MoE architectures for the three models. The largest Behemoth and the smallest Scout use the traditional MoE, with 16 experts—a number traditionally considered conventional. The middle Maverick, however, uses a new fine-grained expert plus shared expert model proposed by DeepSeek MoE, with a 128 experts plus 1 shared expert architecture.<br>Generally, models in the same generation use the same architecture, with adjustments made to the number of layers and the width of each layer. Having two models with significant differences in the same generation is odd. Moreover, even if there are changes, it shouldn’t be the largest and smallest models that remain consistent, while the middle-sized one is switched. It feels like the middle Maverick was hastily retrained under the impact of DeepSeek, but there wasn’t enough time to redo all three, so they were just released together.</p>
+<h2 id="Strange-Cost-Investment"><a href="#Strange-Cost-Investment" class="headerlink" title="Strange Cost Investment"></a>Strange Cost Investment</h2><p>Typically, the larger the model’s parameter scale, the higher the cost required. On one hand, larger models can accommodate more knowledge and require more corpus for larger models; on the other hand, with the same corpus, larger models require more parameters to be trained, leading to higher GPU costs. Therefore, usually, the larger the model scale, the higher the required cost.<br>However, in Llama 4, both indicators are reversed. Maverick’s parameter scale is nearly four times that of Scout, but Maverick’s training corpus size is only half of Scout’s, and the consumed GPU time is also only half. Considering that the activated parameters of these two models are the same, the GPU time can be understood, but the corpus size being only half is very strange. It feels like either this is a trial of the new MoE architecture without intending to do a full training, or the training broke down later, and they had to release from an intermediate snapshot.</p>
+<h2 id="Strange-Context-Length"><a href="#Strange-Context-Length" class="headerlink" title="Strange Context Length"></a>Strange Context Length</h2><p>Generally, larger models have stronger capabilities. However, in this generation of Llama, the most shocking 10M context is given to the smallest Scout, while the larger Maverick has only 1M context. Considering the mainstream method for expanding context is still post-training fine-tuning, the larger Maverick’s post-training investment is less than the smaller Scout.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>It feels like Llama 4 was initially intended to follow the traditional MoE path but was influenced by DeepSeek and halfway started to look at DeepSeek MoE. However, training might have already begun, and stopping it would have been difficult, so a middle-sized Maverick was inserted. Judging from the parameter selection, the goal seems to be to achieve similar performance to DeepSeek V3 with a smaller parameter count. However, with 17B activated parameters, it seems challenging to match DeepSeek V3’s 39B activated parameters. Nevertheless, the fact that this generation’s models were released in such a chaotic form, along with a futures model, suggests that there are significant issues within the Llama project.</p>
+<p><img src="/en/../images/llama4.png"></p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/en/2025/03/29/deepseek-moe/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-04-06 16:28:50
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/LLM/" title="LLM">
+                        #LLM
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/Llama/" title="Llama">
+                        #Llama
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
         </div>
       
-      <div class="post-item" title="Chaos in Llama 4">
-        <div class="time-m-d">04-06</div>
-        <div class="title">
-          <a href="/en/2025/04/06/chaos-llama4/">
-            <span>Chaos in Llama 4</span>
-          </a>
-        </div>
-      </div>
+    </div>
     
-      <div class="post-item" title="DeepSeek MoE -- An Innovative MoE Architecture">
-        <div class="time-m-d">03-29</div>
-        <div class="title">
-          <a href="/en/2025/03/29/deepseek-moe/">
-            <span>DeepSeek MoE -- An Innovative MoE Architecture</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="From DeepSeek LLM to DeepSeek R1 — DeepSeek LLM">
-        <div class="time-m-d">03-14</div>
-        <div class="title">
-          <a href="/en/2025/03/14/from-deepseek-llm-to-r1-1/">
-            <span>From DeepSeek LLM to DeepSeek R1 — DeepSeek LLM</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="Extending KubeVirt Through the Network Binding Plugin">
-        <div class="time-m-d">01-12</div>
-        <div class="title">
-          <a href="/en/2025/01/12/kubevirt-networking/">
-            <span>Extending KubeVirt Through the Network Binding Plugin</span>
-          </a>
-        </div>
-      </div>
-    
-        <!-- 后续文章的发布年份呈现 -->
-        <div class="content-title">
-          <h2>
-            <span>2024</span>
-          </h2>
-        </div>
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
       
-      <div class="post-item" title="AI Gateway Survey: Cloudflare AI Gateway">
-        <div class="time-m-d">08-26</div>
-        <div class="title">
-          <a href="/en/2024/08/26/ai-gateway-cloudflare/">
-            <span>AI Gateway Survey: Cloudflare AI Gateway</span>
-          </a>
-        </div>
-      </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Model-Basic-Information"><span class="toc-text">Model Basic Information</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Strange-MoE-Architecture"><span class="toc-text">Strange MoE Architecture</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Strange-Cost-Investment"><span class="toc-text">Strange Cost Investment</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Strange-Context-Length"><span class="toc-text">Strange Context Length</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/en/js/catalog.js"></script>
+
+
+
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9141929305076734"
+     crossorigin="anonymous"></script>
+<!-- 横向广告 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-9141929305076734"
+     data-ad-slot="3076777751"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
     
-      <div class="post-item" title="5 Solutions for Multi-Cluster Communication in Kubernetes">
-        <div class="time-m-d">05-24</div>
-        <div class="title">
-          <a href="/en/2024/05/24/five-kubernetes-multicluster-network/">
-            <span>5 Solutions for Multi-Cluster Communication in Kubernetes</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="k8gb: The Best Open Source GSLB Solution for Cloud Native">
-        <div class="time-m-d">04-18</div>
-        <div class="title">
-          <a href="/en/2024/04/18/k8gb-best-cloudnative-gslb/">
-            <span>k8gb: The Best Open Source GSLB Solution for Cloud Native</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="How to Easily Integrate AI-Generated Content into Logseq Notes">
-        <div class="time-m-d">03-21</div>
-        <div class="title">
-          <a href="/en/2024/03/21/ai-content-to-logseq/">
-            <span>How to Easily Integrate AI-Generated Content into Logseq Notes</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="Automatic Shutdown Server under VS Code Remote SSH">
-        <div class="time-m-d">03-13</div>
-        <div class="title">
-          <a href="/en/2024/03/13/shutdown-remote-ssh-server/">
-            <span>Automatic Shutdown Server under VS Code Remote SSH</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="The Impact of Preallocating Slice Memory in Golang (Continued)">
-        <div class="time-m-d">03-04</div>
-        <div class="title">
-          <a href="/en/2024/03/04/golang-slice-performance-cont/">
-            <span>The Impact of Preallocating Slice Memory in Golang (Continued)</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="The Impact of Pre-allocating Slice Memory on Performance in Golang">
-        <div class="time-m-d">03-04</div>
-        <div class="title">
-          <a href="/en/2024/03/04/golang-slice-performance/">
-            <span>The Impact of Pre-allocating Slice Memory on Performance in Golang</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="The Single-Node Kubernetes Showdown: minikube vs. kind vs. k3d">
-        <div class="time-m-d">02-22</div>
-        <div class="title">
-          <a href="/en/2024/02/22/minikube-vs-kind-vs-k3d/">
-            <span>The Single-Node Kubernetes Showdown: minikube vs. kind vs. k3d</span>
-          </a>
-        </div>
+      <div class="comments-container">
+        
+
+
+
+
+
+
+  <div id="gitalk-container"></div>
+
+  <script>
+    function loadGitalkSuc() {
+      const gitalk = new Gitalk({
+        clientID: 'fa956f38daf8cc1f8222',
+        clientSecret: '8e37dcda7dc6d86518fc00b06f8d7008ef8542c6',
+        repo: 'oilbeater.github.com',
+        owner: 'oilbeater',
+        admin: ['oilbeater'],
+        id: location.pathname,
+        distractionFreeMode: false
+      })
+
+      gitalk.render('gitalk-container')
+    }
+  </script>
+  
+    <link rel="stylesheet" href="/plugins/gitalk.css">
+    <script type="text/javascript" src="/plugins/gitalk.min.js" onload="loadGitalkSuc(this)"></script>
+  
+
+
+
       </div>
     
   </div>
-</div>
+
 
         
 <div class="footer">
@@ -569,6 +666,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Chaos%20in%20Llama%204 + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F04%2F06%2Fchaos-llama4%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/04/06/chaos-llama4/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/en/js/shares.js"></script>
