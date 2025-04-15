@@ -6,7 +6,7 @@ tags:
 - LLM
 - Paper
 ---
-DeepSeek first gained fame because DeepSeek V2 achieved a cost of just $0.14 per million tokens. At the same time, GPT-4 cost $30, and even the highly cost-effective GPT-3.5 was priced at $1.5. This breakthrough pricing sparked a price war in China, with many major tech companies slashing prices or even offering free models. However, unlike the logic of burning money for subsidies adopted by other companies, DeepSeek achieved an order-of-magnitude cost reduction through a series of technological innovations. This article introduces one of the most critical innovations behind this — MLA (Multi-Head Latent Attention).
+DeepSeek first gained fame because DeepSeek V2 achieved a cost of just \$0.14 per million tokens. At the same time, GPT-4 cost \$30, and even the highly cost-effective GPT-3.5 was priced at \$1.5. This breakthrough pricing sparked a price war in China, with many major tech companies slashing prices or even offering free models. However, unlike the logic of burning money for subsidies adopted by other companies, DeepSeek achieved an order-of-magnitude cost reduction through a series of technological innovations. This article introduces one of the most critical innovations behind this — MLA (Multi-Head Latent Attention).
 
 The core mathematical trick of MLA isn’t complicated; the paper explains it in just a few sentences, leaving readers amazed at such an elegant solution. However, because it’s tightly coupled with the Transformer architecture, understanding it can be challenging. Here, I’ll simplify the explanation as much as possible so that even those unfamiliar with Transformers can grasp the brilliance of this method.
 
@@ -36,11 +36,9 @@ A full comparison is shown below. The original MHA needs to cache the full matri
 
 Is it really this perfect? Let’s revisit the original purpose of KVCache: to avoid redundant intermediate computations for tokens. While MLA compresses KVCache, it still requires a decompression step, bringing the computational cost back.
 
-Here’s where the story gets even more fascinating. In Transformer computations, the cached intermediate result is multiplied by a decompression matrix and then an output matrix to produce the final result. Roughly speaking, the computation can be expressed as:
+Here’s where the story gets even more fascinating. In Transformer computations, the cached intermediate result is multiplied by a decompression matrix and then an output matrix to produce the final result. Roughly speaking, the computation can be expressed as: Cache × W<sup>decompress</sup> × W<sup>output</sup>
 
-`Cache × W<sup>decompress</sup> × W<sup>output</sup>`
-
-Thanks to the associative property of matrix multiplication, we can first multiply the latter two matrices and fuse them into a single new matrix. Since `W<sup>decompress</sup>` and `W<sup>output</sup>` are fixed after training, this fusion can be precomputed with simple post-processing. The authors even describe this in the paper with the word **"Fortunately."**
+Thanks to the associative property of matrix multiplication, we can first multiply the latter two matrices and fuse them into a single new matrix. Since W<sup>decompress</sup> and W<sup>output</sup> are fixed after training, this fusion can be precomputed with simple post-processing. The authors even describe this in the paper with the word **"Fortunately"**.
 
 In other words, we initially compressed KVCache to save memory, but in actual inference, no decompression happens. Not only is memory usage drastically reduced, but the smaller matrices also decrease computational requirements.
 
