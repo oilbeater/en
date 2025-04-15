@@ -6,7 +6,7 @@ tags:
 - LLM
 - Paper
 ---
-DeepSeek first gained fame because DeepSeek V2 achieved a cost of just \$0.14 per million tokens. At the same time, GPT-4 cost \$30, and even the highly cost-effective GPT-3.5 was priced at \$1.5. This breakthrough pricing sparked a price war in China, with many major tech companies slashing prices or even offering free models. However, unlike the logic of burning money for subsidies adopted by other companies, DeepSeek achieved an order-of-magnitude cost reduction through a series of technological innovations. This article introduces one of the most critical innovations behind this — MLA (Multi-Head Latent Attention).
+DeepSeek first gained fame because DeepSeek V2 achieved a cost of just 0.14 dollar per million tokens. At the same time, GPT-4 cost 30 dollar, and even the highly cost-effective GPT-3.5 was priced at 1.5 dollar. This breakthrough pricing sparked a price war in China, with many major tech companies slashing prices or even offering free models. However, unlike the logic of burning money for subsidies adopted by other companies, DeepSeek achieved an order-of-magnitude cost reduction through a series of technological innovations. This article introduces one of the most critical innovations behind this — MLA (Multi-Head Latent Attention).
 
 The core mathematical trick of MLA isn’t complicated; the paper explains it in just a few sentences, leaving readers amazed at such an elegant solution. However, because it’s tightly coupled with the Transformer architecture, understanding it can be challenging. Here, I’ll simplify the explanation as much as possible so that even those unfamiliar with Transformers can grasp the brilliance of this method.
 
