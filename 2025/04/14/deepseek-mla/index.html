@@ -183,7 +183,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2025-04-15 08:25:25
+          2025-04-15 08:28:50
         </span>
         
               <span class="post-tags">
@@ -224,9 +224,8 @@
 <p>A full comparison is shown below. The original MHA needs to cache the full matrix, while MLA only caches the compressed vector and reconstructs the full matrix when needed.</p>
 <p><img src="/en/../images/20250415000024.png"><br><img src="/en/../images/20250414235538.png"></p>
 <p>Is it really this perfect? Let’s revisit the original purpose of KVCache: to avoid redundant intermediate computations for tokens. While MLA compresses KVCache, it still requires a decompression step, bringing the computational cost back.</p>
-<p>Here’s where the story gets even more fascinating. In Transformer computations, the cached intermediate result is multiplied by a decompression matrix and then an output matrix to produce the final result. Roughly speaking, the computation can be expressed as:</p>
-<p><code>Cache × W&lt;sup&gt;decompress&lt;/sup&gt; × W&lt;sup&gt;output&lt;/sup&gt;</code></p>
-<p>Thanks to the associative property of matrix multiplication, we can first multiply the latter two matrices and fuse them into a single new matrix. Since <code>W&lt;sup&gt;decompress&lt;/sup&gt;</code> and <code>W&lt;sup&gt;output&lt;/sup&gt;</code> are fixed after training, this fusion can be precomputed with simple post-processing. The authors even describe this in the paper with the word <strong>“Fortunately.”</strong></p>
+<p>Here’s where the story gets even more fascinating. In Transformer computations, the cached intermediate result is multiplied by a decompression matrix and then an output matrix to produce the final result. Roughly speaking, the computation can be expressed as: Cache × W<sup>decompress</sup> × W<sup>output</sup></p>
+<p>Thanks to the associative property of matrix multiplication, we can first multiply the latter two matrices and fuse them into a single new matrix. Since W<sup>decompress</sup> and W<sup>output</sup> are fixed after training, this fusion can be precomputed with simple post-processing. The authors even describe this in the paper with the word <strong>“Fortunately”</strong>.</p>
 <p>In other words, we initially compressed KVCache to save memory, but in actual inference, no decompression happens. Not only is memory usage drastically reduced, but the smaller matrices also decrease computational requirements.</p>
 <h2 id="Model-Capability"><a href="#Model-Capability" class="headerlink" title="Model Capability"></a>Model Capability</h2><p>However, one question remains unanswered: MLA essentially approximates a large matrix with two smaller ones, but not all large matrices can be perfectly decomposed this way. The actual search space of MLA is smaller than MHA’s, so theoretically, MLA’s model capability should be weaker. Yet, according to DeepSeek’s paper, MLA slightly outperforms MHA in evaluations.</p>
 <p><img src="/en/../images/20250415003909.png"></p>
@@ -252,7 +251,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2025-04-15 08:25:25
+              2025-04-15 08:28:50
             </span>
             
                   <span class="post-tags">
