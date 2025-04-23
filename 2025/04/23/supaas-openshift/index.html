@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="How to Surpass OpenShift | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="How to Surpass OpenShift | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,7 +28,7 @@
   
   <title>
     
-      archive_a: 2024/5 
+      How to Surpass OpenShift 
       
       
       |
@@ -134,156 +134,198 @@
 
 
       <div class="flex-container">
-        <!-- 归档页，展示本站所有文章，按照年份降序归类，url形式：https://yoursite/archives/ -->
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
 
-<!-- last: 按年份把文章分组，当前遍历到的年份 -->
-<!-- now: 当前遍历到的文章的发布年份 -->
 
-<div class="container archives">
-  <div class="post-list">
-    
-        <!-- 后续文章的发布年份呈现 -->
-        <div class="content-title">
-          <h2>
-            <span>2025</span>
-          </h2>
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/en/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">How to Surpass OpenShift</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-04-23 11:05:07
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/OpenShift/" title="OpenShift">
+                    #OpenShift
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/Product/" title="Product">
+                    #Product
+                  </a>
+                </span>
+                
+              </span>
+          
+      </div>
+      <div class="markdown-body">
+        <p>OpenShift, as a benchmark product in the container platform space and a model of open-source commercialization, has always been a target for others to chase or surpass. However, if you merely imitate OpenShift’s product, the only scenario where you might catch up is if OpenShift stops developing. After a year, you might finally catch up, only to be phased out for the same reasons.</p>
+<p>So, is there a way to catch up with or even surpass OpenShift? I believe the key lies in examining OpenShift’s business model choices and technical roadmap, identifying the inevitable shortcomings that arise from these choices, and then differentiating yourself. Only then is surpassing OpenShift possible.</p>
+<h2 id="OpenShift-Is-Not-Open"><a href="#OpenShift-Is-Not-Open" class="headerlink" title="OpenShift Is Not Open"></a>OpenShift Is Not Open</h2><p>The “Open” in OpenShift might be the same as the “Open” in OpenAI. If you’ve ever tried to deploy OpenShift without going through RedHat’s sales team, you’ll know exactly what I mean.</p>
+<p>All of OpenShift’s components are indeed open-source, but if you’re purely a community user, you’ll face obstacles at every step. You might struggle to find the corresponding component for a feature, locate its source code, or even find documentation on how to compile and use it. These issues are commonplace for components exclusively used by OpenShift. It seems OpenShift’s “community” is only open to customers and partners.</p>
+<p>For non-OpenShift-specific components, OpenShift’s strategy is to heavily invest once a choice is made, aiming to gain dominance in the corresponding component’s community. As a result, you’ll notice that OpenShift contributors are entirely absent from some well-known community projects, while others that have been steadily developing for years suddenly see an influx of OpenShift contributors.</p>
+<p>These are the trade-offs OpenShift has made between commercialization and open-source—there’s no right or wrong here. However, this leaves room for more open projects. If a new product can lower the barrier to entry, gather broader feedback, and enable more contributors to participate in innovation, I believe its potential will surpass OpenShift’s.</p>
+<h2 id="OpenShift’s-Technology-Isn’t-Cutting-Edge"><a href="#OpenShift’s-Technology-Isn’t-Cutting-Edge" class="headerlink" title="OpenShift’s Technology Isn’t Cutting-Edge"></a>OpenShift’s Technology Isn’t Cutting-Edge</h2><p>Due to the first point, OpenShift cannot widely adopt the latest advancements from the broader ecosystem. When a component in the ecosystem overlaps with OpenShift’s proprietary components, OpenShift’s internal developers have little incentive to switch to another community or an open-source component led by another company.</p>
+<p>Take networking, for example—an area I’m familiar with. Early on, OpenShift implemented Route using HAProxy to enable external traffic to access services inside the cluster. At the time, when Ingress was still immature, Route was a far more advanced solution than what the community offered, and OpenShift’s approach was undoubtedly leading. However, as Ingress matured and various gateways in the ecosystem rapidly evolved, OpenShift, constrained by its early implementation and user practices, took a long time to support Ingress, which had already become a standardized feature in the community. Now, the Ingress specification has progressed to GatewayAPI, and many new AI Gateway scenarios are extending through GatewayAPI. Yet, OpenShift still doesn’t support GatewayAPI and is only recently planning to add support for Route, Ingress, and GatewayAPI on its existing HAProxy.</p>
+<p>There are many similar cases within OpenShift. Early solutions might have been excellent, but because they were OpenShift-specific and closed, they eventually became obstacles to progress as the community advanced. Today, no one building an Ingress Gateway on Kubernetes would reference OpenShift’s implementation. In many niche areas, OpenShift is no longer the most advanced solution. To me, OpenShift now feels like a broad but mediocre and uninspiring platform.</p>
+<p>The production of a container platform is similar to manufacturing a smartphone—it involves selecting components from hundreds of suppliers and assembling them into a final product. If you can remain open, choose the most cutting-edge components from the supply chain, or quickly assemble a product tailored to specific scenarios, your technical competitiveness should far surpass OpenShift’s.</p>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>To truly catch up with or surpass OpenShift, the key isn’t to follow its existing features step by step but to be more open and more advanced. Only then can you break free from the follower’s path, establish a differentiated advantage over OpenShift, and become a leader in the next wave of technology.</p>
+
+      </div>
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
+            
+              <a href="/en/2025/04/14/deepseek-mla/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
+            
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-04-23 11:05:07
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/OpenShift/" title="OpenShift">
+                        #OpenShift
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/Product/" title="Product">
+                        #Product
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
         </div>
       
-      <div class="post-item" title="How to Surpass OpenShift">
-        <div class="time-m-d">04-23</div>
-        <div class="title">
-          <a href="/en/2025/04/23/supaas-openshift/">
-            <span>How to Surpass OpenShift</span>
-          </a>
-        </div>
-      </div>
+    </div>
     
-      <div class="post-item" title="DeepSeek MLA -- The Attention Mechanism Born for Cost Optimization">
-        <div class="time-m-d">04-14</div>
-        <div class="title">
-          <a href="/en/2025/04/14/deepseek-mla/">
-            <span>DeepSeek MLA -- The Attention Mechanism Born for Cost Optimization</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="Chaos in Llama 4">
-        <div class="time-m-d">04-06</div>
-        <div class="title">
-          <a href="/en/2025/04/06/chaos-llama4/">
-            <span>Chaos in Llama 4</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="DeepSeek MoE -- An Innovative MoE Architecture">
-        <div class="time-m-d">03-29</div>
-        <div class="title">
-          <a href="/en/2025/03/29/deepseek-moe/">
-            <span>DeepSeek MoE -- An Innovative MoE Architecture</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="From DeepSeek LLM to DeepSeek R1 — DeepSeek LLM">
-        <div class="time-m-d">03-14</div>
-        <div class="title">
-          <a href="/en/2025/03/14/from-deepseek-llm-to-r1-1/">
-            <span>From DeepSeek LLM to DeepSeek R1 — DeepSeek LLM</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="Extending KubeVirt Through the Network Binding Plugin">
-        <div class="time-m-d">01-12</div>
-        <div class="title">
-          <a href="/en/2025/01/12/kubevirt-networking/">
-            <span>Extending KubeVirt Through the Network Binding Plugin</span>
-          </a>
-        </div>
-      </div>
-    
-        <!-- 后续文章的发布年份呈现 -->
-        <div class="content-title">
-          <h2>
-            <span>2024</span>
-          </h2>
-        </div>
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
       
-      <div class="post-item" title="AI Gateway Survey: Cloudflare AI Gateway">
-        <div class="time-m-d">08-26</div>
-        <div class="title">
-          <a href="/en/2024/08/26/ai-gateway-cloudflare/">
-            <span>AI Gateway Survey: Cloudflare AI Gateway</span>
-          </a>
-        </div>
-      </div>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenShift-Is-Not-Open"><span class="toc-text">OpenShift Is Not Open</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenShift%E2%80%99s-Technology-Isn%E2%80%99t-Cutting-Edge"><span class="toc-text">OpenShift’s Technology Isn’t Cutting-Edge</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/en/js/catalog.js"></script>
+
+
+
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9141929305076734"
+     crossorigin="anonymous"></script>
+<!-- 横向广告 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-9141929305076734"
+     data-ad-slot="3076777751"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
     
-      <div class="post-item" title="5 Solutions for Multi-Cluster Communication in Kubernetes">
-        <div class="time-m-d">05-24</div>
-        <div class="title">
-          <a href="/en/2024/05/24/five-kubernetes-multicluster-network/">
-            <span>5 Solutions for Multi-Cluster Communication in Kubernetes</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="k8gb: The Best Open Source GSLB Solution for Cloud Native">
-        <div class="time-m-d">04-18</div>
-        <div class="title">
-          <a href="/en/2024/04/18/k8gb-best-cloudnative-gslb/">
-            <span>k8gb: The Best Open Source GSLB Solution for Cloud Native</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="How to Easily Integrate AI-Generated Content into Logseq Notes">
-        <div class="time-m-d">03-21</div>
-        <div class="title">
-          <a href="/en/2024/03/21/ai-content-to-logseq/">
-            <span>How to Easily Integrate AI-Generated Content into Logseq Notes</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="Automatic Shutdown Server under VS Code Remote SSH">
-        <div class="time-m-d">03-13</div>
-        <div class="title">
-          <a href="/en/2024/03/13/shutdown-remote-ssh-server/">
-            <span>Automatic Shutdown Server under VS Code Remote SSH</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="The Impact of Preallocating Slice Memory in Golang (Continued)">
-        <div class="time-m-d">03-04</div>
-        <div class="title">
-          <a href="/en/2024/03/04/golang-slice-performance-cont/">
-            <span>The Impact of Preallocating Slice Memory in Golang (Continued)</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="The Impact of Pre-allocating Slice Memory on Performance in Golang">
-        <div class="time-m-d">03-04</div>
-        <div class="title">
-          <a href="/en/2024/03/04/golang-slice-performance/">
-            <span>The Impact of Pre-allocating Slice Memory on Performance in Golang</span>
-          </a>
-        </div>
-      </div>
-    
-      <div class="post-item" title="The Single-Node Kubernetes Showdown: minikube vs. kind vs. k3d">
-        <div class="time-m-d">02-22</div>
-        <div class="title">
-          <a href="/en/2024/02/22/minikube-vs-kind-vs-k3d/">
-            <span>The Single-Node Kubernetes Showdown: minikube vs. kind vs. k3d</span>
-          </a>
-        </div>
+      <div class="comments-container">
+        
+
+
+
+
+
+
+  <div id="gitalk-container"></div>
+
+  <script>
+    function loadGitalkSuc() {
+      const gitalk = new Gitalk({
+        clientID: 'fa956f38daf8cc1f8222',
+        clientSecret: '8e37dcda7dc6d86518fc00b06f8d7008ef8542c6',
+        repo: 'oilbeater.github.com',
+        owner: 'oilbeater',
+        admin: ['oilbeater'],
+        id: location.pathname,
+        distractionFreeMode: false
+      })
+
+      gitalk.render('gitalk-container')
+    }
+  </script>
+  
+    <link rel="stylesheet" href="/plugins/gitalk.css">
+    <script type="text/javascript" src="/plugins/gitalk.min.js" onload="loadGitalkSuc(this)"></script>
+  
+
+
+
       </div>
     
   </div>
-</div>
+
 
         
 <div class="footer">
@@ -587,6 +629,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + How%20to%20Surpass%20OpenShift + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F04%2F23%2Fsupaas-openshift%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/04/23/supaas-openshift/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/en/js/shares.js"></script>
