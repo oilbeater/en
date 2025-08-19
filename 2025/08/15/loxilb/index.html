@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="LoxiLB -- More than MetalLB | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content=" | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="LoxiLB -- More than MetalLB | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -25,10 +25,13 @@
   <!-- 用于搜索引擎的文章摘要 -->
   
   
-    <meta name="robots" content="noindex" />
-  
   
   <title>
+    
+      LoxiLB -- More than MetalLB 
+      
+      
+      |
     
      Oilbeater&#39;s Study Room
   </title>
@@ -131,84 +134,202 @@
 
 
       <div class="flex-container">
-        <div class="container index">
-  <div class="post-list">
-    <!-- 遍历渲染文章 -->
-    
-      <div class="post-item" title="How to Easily Integrate AI-Generated Content into Logseq Notes">
-        <div class="time-m-d">2024-03-21</div>
-        <div class="title">
-          <a href="/en/2024/03/21/ai-content-to-logseq/">
-            
-              
-                <span>How to Easily Integrate AI-Generated Content into Logseq Notes</span>
-              
-            
-          </a>
-        </div>
+        <!-- 文章详情页，展示文章具体内容，url形式：https://yoursite/文章标题/ -->
+<!-- 同时为「标签tag」，「朋友friend」，「分类categories」，「关于about」页面的承载页面，具体展示取决于page.type -->
+
+
+  <!-- LaTex Display -->
+
+  
+    <script async type="text/javascript" src="/plugins/mathjax/tex-chtml.js"></script>
+  
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']]
+      }
+    }
+  </script>
+
+
+
+
+
+  <!-- clipboard -->
+
+  
+    <script async type="text/javascript" src="/plugins/clipboard.min.js"></script>
+  
+  
+<script src="/en/js/codeCopy.js"></script>
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
+  <div class="container post-details" id="post-details">
+    <div class="post-content">
+      <div class="post-title">LoxiLB -- More than MetalLB</div>
+      <div class="post-attach">
+        <span class="post-pubtime">
+          <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+          2025-08-19 08:06:35
+        </span>
+        
+              <span class="post-tags">
+                <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/metallb/" title="metallb">
+                    #metallb
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/loxilb/" title="loxilb">
+                    #loxilb
+                  </a>
+                </span>
+                
+              </span>
+          
       </div>
-    
-      <div class="post-item" title="Automatic Shutdown Server under VS Code Remote SSH">
-        <div class="time-m-d">2024-03-13</div>
-        <div class="title">
-          <a href="/en/2024/03/13/shutdown-remote-ssh-server/">
-            
-              
-                <span>Automatic Shutdown Server under VS Code Remote SSH</span>
-              
-            
-          </a>
-        </div>
+      <div class="markdown-body">
+        <p><a target="_blank" rel="noopener" href="https://github.com/metallb/metallb">MetalLB</a> has become the de facto standard for providing LoadBalancer-type Services in private cloud Kubernetes environments. Its implementation is straightforward and focused, with a gossip-based distributed leader election ensuring quick VIP failover independent of Kubernetes’ state. However, this specialization also means it lacks some critical production-ready features, which led me to explore alternatives like <a target="_blank" rel="noopener" href="https://github.com/loxilb-io/loxilb">LoxiLB</a>.</p>
+<h2 id="Limitations-of-MetalLB"><a href="#Limitations-of-MetalLB" class="headerlink" title="Limitations of MetalLB"></a>Limitations of MetalLB</h2><p>Despite its name, MetalLB doesn’t handle any data plane forwarding. Strictly speaking, it only provides VIP advertisement capabilities, relying entirely on kube-proxy or its alternatives for forwarding. While this allows MetalLB to focus on various VIP advertisement methods and maintain maximum compatibility with Kubernetes, it also inherits kube-proxy’s functional limitations.</p>
+<h3 id="Lack-of-Active-Health-Checks"><a href="#Lack-of-Active-Health-Checks" class="headerlink" title="Lack of Active Health Checks"></a>Lack of Active Health Checks</h3><p>This is a long-standing Kubernetes issue. Service endpoint health depends on Pod ReadinessProbe&#x2F;LivenessProbe, which require the node’s kubelet to function. During power failures or kernel crashes, kubelet can’t update Pod status until node-not-ready timeout occurs (often minutes in large clusters), causing service access failures during this window.</p>
+<p>While not strictly MetalLB’s fault, its inability to actively probe Pod health or modify status leaves it vulnerable to this mechanism. Though <a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-readiness-gate">Pod ReadinessGates</a> allow external controllers to manage health status, MetalLB offers no out-of-the-box solution, creating production environment risks.</p>
+<h3 id="Inadequate-Monitoring"><a href="#Inadequate-Monitoring" class="headerlink" title="Inadequate Monitoring"></a>Inadequate Monitoring</h3><p>Another kube-proxy limitation. Most kube-proxy implementations lack traffic-level monitoring, meaning MetalLB’s <a target="_blank" rel="noopener" href="https://metallb.universe.tf/prometheus-metrics/">metrics</a> contain no traffic data. Deploying an LB with virtually no data plane monitoring in production seems overly optimistic.</p>
+<h2 id="LoxiLB’s-Improvements"><a href="#LoxiLB’s-Improvements" class="headerlink" title="LoxiLB’s Improvements"></a>LoxiLB’s Improvements</h2><p>LoxiLB is an eBPF-based LB designed for telecom scenarios, implementing both control and data planes as a complete LB solution. While packed with features (especially for SCTP), we’ll focus on how it addresses MetalLB’s gaps.</p>
+<h3 id="Active-Health-Checks"><a href="#Active-Health-Checks" class="headerlink" title="Active Health Checks"></a>Active Health Checks</h3><p>LoxiLB supports <a target="_blank" rel="noopener" href="https://docs.loxilb.io/latest/cmd/#create-end-point-for-health-probing">configurable health checks</a> per Service, including ping, TCP, UDP, SCTP, HTTP, HTTPS with timeout&#x2F;retry settings. While not revolutionary, MetalLB’s complete lack of this functionality makes LoxiLB’s offering notable.</p>
+<h3 id="Monitoring-Capabilities"><a href="#Monitoring-Capabilities" class="headerlink" title="Monitoring Capabilities"></a>Monitoring Capabilities</h3><p>Here eBPF shines. LoxiLB includes built-in <a target="_blank" rel="noopener" href="https://docs.loxilb.io/latest/loxilb-incluster-grafana/">Metrics and Grafana dashboards</a>, and its self-contained data plane makes adding custom metrics relatively straightforward.</p>
+<h3 id="Potential-Concerns"><a href="#Potential-Concerns" class="headerlink" title="Potential Concerns"></a>Potential Concerns</h3><p>While LoxiLB is impressive (its SCTP implementations helped me understand the protocol better), some areas need attention:</p>
+<ul>
+<li>Leader election still uses Kubernetes’ native mechanism, unlike MetalLB’s decoupled approach.</li>
+<li>Documentation, though extensive, is disorganized—many configurations require searching, and some formatting issues exist.</li>
+<li>As a CNCF sandbox project, its community activity remains limited. While clearly mature internally, low adoption could pose future risks.</li>
+</ul>
+<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>MetalLB remains excellent at VIP advertisement and high availability, but requires additional components for production readiness. LoxiLB offers a complete LB solution, though its community is still developing and needs broader participation.</p>
+
       </div>
-    
-      <div class="post-item" title="The Impact of Preallocating Slice Memory in Golang (Continued)">
-        <div class="time-m-d">2024-03-04</div>
-        <div class="title">
-          <a href="/en/2024/03/04/golang-slice-performance-cont/">
+      
+        <div class="prev-or-next">
+          <div class="post-foot-next">
             
-              
-                <span>The Impact of Preallocating Slice Memory in Golang (Continued)</span>
-              
+              <a href="/en/2025/04/23/supaas-openshift/" target="_self">
+                <i class="iconfont icon-chevronleft"></i>
+                <span>Prev</span>
+              </a>
             
-          </a>
+          </div>
+          <div class="post-attach">
+            <span class="post-pubtime">
+              <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
+              2025-08-19 08:06:35
+            </span>
+            
+                  <span class="post-tags">
+                    <i class="iconfont icon-tags mr-10" title="Tags"></i>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/metallb/" title="metallb">
+                        #metallb
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/loxilb/" title="loxilb">
+                        #loxilb
+                      </a>
+                    </span>
+                    
+                  </span>
+              
+          </div>
+          <div class="post-foot-prev">
+            
+          </div>
         </div>
-      </div>
+      
+    </div>
     
-      <div class="post-item" title="The Impact of Pre-allocating Slice Memory on Performance in Golang">
-        <div class="time-m-d">2024-03-04</div>
-        <div class="title">
-          <a href="/en/2024/03/04/golang-slice-performance/">
-            
-              
-                <span>The Impact of Pre-allocating Slice Memory on Performance in Golang</span>
-              
-            
-          </a>
-        </div>
-      </div>
+  <div id="btn-catalog" class="btn-catalog">
+    <i class="iconfont icon-catalog"></i>
+  </div>
+  <div class="post-catalog hidden" id="catalog">
+    <div class="title">Contents</div>
+    <div class="catalog-content">
+      
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Limitations-of-MetalLB"><span class="toc-text">Limitations of MetalLB</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Lack-of-Active-Health-Checks"><span class="toc-text">Lack of Active Health Checks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Inadequate-Monitoring"><span class="toc-text">Inadequate Monitoring</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LoxiLB%E2%80%99s-Improvements"><span class="toc-text">LoxiLB’s Improvements</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Active-Health-Checks"><span class="toc-text">Active Health Checks</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Monitoring-Capabilities"><span class="toc-text">Monitoring Capabilities</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Potential-Concerns"><span class="toc-text">Potential Concerns</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li></ol>
+      
+    </div>
+  </div>
+
+  
+<script src="/en/js/catalog.js"></script>
+
+
+
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9141929305076734"
+     crossorigin="anonymous"></script>
+<!-- 横向广告 -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-9141929305076734"
+     data-ad-slot="3076777751"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
     
-      <div class="post-item" title="The Single-Node Kubernetes Showdown: minikube vs. kind vs. k3d">
-        <div class="time-m-d">2024-02-22</div>
-        <div class="title">
-          <a href="/en/2024/02/22/minikube-vs-kind-vs-k3d/">
-            
-              
-                <span>The Single-Node Kubernetes Showdown: minikube vs. kind vs. k3d</span>
-              
-            
-          </a>
-        </div>
+      <div class="comments-container">
+        
+
+
+
+
+
+
+  <div id="gitalk-container"></div>
+
+  <script>
+    function loadGitalkSuc() {
+      const gitalk = new Gitalk({
+        clientID: 'fa956f38daf8cc1f8222',
+        clientSecret: '8e37dcda7dc6d86518fc00b06f8d7008ef8542c6',
+        repo: 'oilbeater.github.com',
+        owner: 'oilbeater',
+        admin: ['oilbeater'],
+        id: location.pathname,
+        distractionFreeMode: false
+      })
+
+      gitalk.render('gitalk-container')
+    }
+  </script>
+  
+    <link rel="stylesheet" href="/plugins/gitalk.css">
+    <script type="text/javascript" src="/plugins/gitalk.min.js" onload="loadGitalkSuc(this)"></script>
+  
+
+
+
       </div>
     
   </div>
-  <nav class="post-navigation">
-    
-      <a href="/en/"><i class="iconfont icon-angleleft"></i></a>
-    
-    <span class="page-num">2 / 2</span>
-    
-  </nav>
-</div>
+
 
         
 <div class="footer">
@@ -512,6 +633,24 @@
 
 
         
+  
+    <div class="share-icon tools-bar-item">
+      <a href="javascript: void(0)" id="share-icon">
+        <i class="iconfont iconshare"></i>
+      </a>
+      <div class="share-content hidden">
+        
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + LoxiLB%20--%20More%20than%20MetalLB + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F08%2F15%2Floxilb%2F + '" target="_blank" title="Twitter">
+            <i class="iconfont icon-twitter"></i>
+          </a>
+        
+        
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/08/15/loxilb/" target="_blank" title="Facebook">
+            <i class="iconfont icon-facebooksquare"></i>
+          </a>
+        
+      </div>
+    </div>
   
   
 <script src="/en/js/shares.js"></script>
