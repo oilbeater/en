@@ -6,7 +6,7 @@ type: "about"
 ## About Me
 
 - [Alauda Inc](https://www.alauda.cn/) Founding Engineer, Technical Partner
-- [Kube-OVN](https://github.com/kubeovn), [Malacca](https://github.com/oilbeater/malacca) Project Initiator and Maintainer
+- [Kube-OVN](https://github.com/kubeovn) Project Initiator and Maintainer
 - Focus on Cloud Native, Networking, Performance, ALL the New Technologies, and Products
 - The child's father, the future grandfather
 - Intermittent Exercise Enthusiast, Probabilistic Book Lover, Popcorn Movie Collector, and Fake Football Fan
