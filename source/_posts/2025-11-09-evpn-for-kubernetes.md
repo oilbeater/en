@@ -15,7 +15,7 @@ Recently, while researching EVPN as a multi-tenancy solution for physical networ
 
 OVN-based solutions have two main limitations: the scalability constraints of the centralized control plane and network complexity.
 
-## Centralized Control Plane
+### Centralized Control Plane
 
 Although Kube-OVN has been deployed in community cases with thousands of nodes at scale, the centralized control plane architecture of OVN places significant pressure on the control plane, making it a bottleneck for the entire cluster. Especially when control plane nodes experience power loss or failures, it may take a considerable amount of time for the network control plane to recover.
 
@@ -23,7 +23,7 @@ Although Kube-OVN has been deployed in community cases with thousands of nodes a
 
 This issue primarily stems from the centralized control plane architecture of OVN and cannot be entirely avoided. ovn-kubernetes addresses this bottleneck by deploying one OVN control plane per node and interconnecting multiple nodes via OVN-IC. However, this approach also increases architectural complexity and essentially abandons OVN's inherent cluster networking capabilities, rendering many OVN features unusable.
 
-## Network Complexity
+### Network Complexity
 
 Another issue lies in the inherent complexity of the OVS/OVN system. Users need to build a new knowledge system around OVN specifications and flow tables to ensure they can handle practical problems effectively. Since this system often differs from the underlying physical network, it effectively results in two separate network systems. This not only complicates troubleshooting but also necessitates separate teams for physical and container networking, who often struggle to understand each other's work and collaborate efficiently.
 
