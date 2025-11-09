@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content="Chaos in Llama 4 | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="OpenPERouter -- Bringing EVPN to Kubernetes | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content="Chaos in Llama 4 | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="OpenPERouter -- Bringing EVPN to Kubernetes | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,7 +28,7 @@
   
   <title>
     
-      Chaos in Llama 4 
+      OpenPERouter -- Bringing EVPN to Kubernetes 
       
       
       |
@@ -179,7 +179,7 @@
   <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
   <div class="container post-details" id="post-details">
     <div class="post-content">
-      <div class="post-title">Chaos in Llama 4</div>
+      <div class="post-title">OpenPERouter -- Bringing EVPN to Kubernetes</div>
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
@@ -190,14 +190,20 @@
                 <i class="iconfont icon-tags mr-10" title="Tags"></i>
                 
                 <span class="span--tag mr-8">
-                  <a href="/en/tags/LLM/" title="LLM">
-                    #LLM
+                  <a href="/en/tags/EVPN/" title="EVPN">
+                    #EVPN
                   </a>
                 </span>
                 
                 <span class="span--tag mr-8">
-                  <a href="/en/tags/Llama/" title="Llama">
-                    #Llama
+                  <a href="/en/tags/Kubernetes/" title="Kubernetes">
+                    #Kubernetes
+                  </a>
+                </span>
+                
+                <span class="span--tag mr-8">
+                  <a href="/en/tags/Network/" title="Network">
+                    #Network
                   </a>
                 </span>
                 
@@ -205,61 +211,41 @@
           
       </div>
       <div class="markdown-body">
-        <p>A while ago, the departure of Meta AI’s head raised suspicions about issues with the progress of Llama 4. However, just two days later, Meta released Llama 4, seemingly to dispel rumors. Yet, after reviewing the basic information of the models that have been published, I feel that the Llama project is now in extreme disarray. Below is my analysis based on the available information, and I welcome any corrections.</p>
-<h2 id="Model-Basic-Information"><a href="#Model-Basic-Information" class="headerlink" title="Model Basic Information"></a>Model Basic Information</h2><p>Llama has officially released a 109B and a 400B parameter model this time, along with information about an unreleased 2T parameter model. I have summarized the key architectural details below. All information is sourced from Llama’s blog and the huggingface model page:</p>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Parameters</th>
-<th>Activated Parameters</th>
-<th>Experts</th>
-<th>Context</th>
-<th>Corpus Size</th>
-<th>GPU Time</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Scout</td>
-<td>109B</td>
-<td>17B</td>
-<td>16</td>
-<td>10M</td>
-<td>40T</td>
-<td>5.0M</td>
-</tr>
-<tr>
-<td>Maverick</td>
-<td>400B</td>
-<td>17B</td>
-<td>128+1</td>
-<td>1M</td>
-<td>22T</td>
-<td>2.38M</td>
-</tr>
-<tr>
-<td>Behemoth</td>
-<td>2T</td>
-<td>288B</td>
-<td>16</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-</tr>
-</tbody></table>
-<p>There’s no need to look at the model’s scoring performance anymore. The comparison of these models’ architectures reveals many issues.</p>
-<h2 id="Strange-MoE-Architecture"><a href="#Strange-MoE-Architecture" class="headerlink" title="Strange MoE Architecture"></a>Strange MoE Architecture</h2><p>Llama 4 has fully transitioned from Dense models to MoE this time, but the bizarre part is that they have adopted two different MoE architectures for the three models. The largest Behemoth and the smallest Scout use the traditional MoE, with 16 experts—a number traditionally considered conventional. The middle Maverick, however, uses a new fine-grained expert plus shared expert model proposed by DeepSeek MoE, with a 128 experts plus 1 shared expert architecture.<br>Generally, models in the same generation use the same architecture, with adjustments made to the number of layers and the width of each layer. Having two models with significant differences in the same generation is odd. Moreover, even if there are changes, it shouldn’t be the largest and smallest models that remain consistent, while the middle-sized one is switched. It feels like the middle Maverick was hastily retrained under the impact of DeepSeek, but there wasn’t enough time to redo all three, so they were just released together.</p>
-<h2 id="Strange-Cost-Investment"><a href="#Strange-Cost-Investment" class="headerlink" title="Strange Cost Investment"></a>Strange Cost Investment</h2><p>Typically, the larger the model’s parameter scale, the higher the cost required. On one hand, larger models can accommodate more knowledge and require more corpus for larger models; on the other hand, with the same corpus, larger models require more parameters to be trained, leading to higher GPU costs. Therefore, usually, the larger the model scale, the higher the required cost.<br>However, in Llama 4, both indicators are reversed. Maverick’s parameter scale is nearly four times that of Scout, but Maverick’s training corpus size is only half of Scout’s, and the consumed GPU time is also only half. Considering that the activated parameters of these two models are the same, the GPU time can be understood, but the corpus size being only half is very strange. It feels like either this is a trial of the new MoE architecture without intending to do a full training, or the training broke down later, and they had to release from an intermediate snapshot.</p>
-<h2 id="Strange-Context-Length"><a href="#Strange-Context-Length" class="headerlink" title="Strange Context Length"></a>Strange Context Length</h2><p>Generally, larger models have stronger capabilities. However, in this generation of Llama, the most shocking 10M context is given to the smallest Scout, while the larger Maverick has only 1M context. Considering the mainstream method for expanding context is still post-training fine-tuning, the larger Maverick’s post-training investment is less than the smaller Scout.</p>
-<h2 id="Conclusion"><a href="#Conclusion" class="headerlink" title="Conclusion"></a>Conclusion</h2><p>It feels like Llama 4 was initially intended to follow the traditional MoE path but was influenced by DeepSeek and halfway started to look at DeepSeek MoE. However, training might have already begun, and stopping it would have been difficult, so a middle-sized Maverick was inserted. Judging from the parameter selection, the goal seems to be to achieve similar performance to DeepSeek V3 with a smaller parameter count. However, with 17B activated parameters, it seems challenging to match DeepSeek V3’s 39B activated parameters. Nevertheless, the fact that this generation’s models were released in such a chaotic form, along with a futures model, suggests that there are significant issues within the Llama project.</p>
-<p><img src="/en/../images/llama4.png"></p>
+        <p>Currently, the mainstream choices for implementing multi-tenancy in Kubernetes networking within the community are <a target="_blank" rel="noopener" href="https://github.com/kubeovn/kube-ovn">Kube-OVN</a> and <a target="_blank" rel="noopener" href="https://github.com/ovn-kubernetes/ovn-kubernetes">ovn-kubernetes</a>. Essentially, both solutions build an overlay virtual network on top of the physical network using the capabilities of OVS and OVN. This approach is less concerned with the underlying physical network architecture and offers good compatibility. However, the dual-layer network architecture also increases the overall complexity.</p>
+<p>Recently, while researching EVPN as a multi-tenancy solution for physical networks, I discovered the open-source project <a target="_blank" rel="noopener" href="https://github.com/openperouter/openperouter">OpenPERouter</a>. It introduces the concept of EVPN into container networking, providing a new approach to achieving multi-tenancy in Kubernetes. This solution not only unifies software and hardware network architectures but also offers some compatibility with existing CNIs like Calico, which advertise routes via BGP. I can even foresee the potential for Calico to gain multi-tenancy capabilities with minimal effort. Although this project is still in its early stages, I believe it represents a promising direction and could become a competitive option for building large-scale data centers in the future.</p>
+<h2 id="Limitations-of-OVN-Based-Solutions"><a href="#Limitations-of-OVN-Based-Solutions" class="headerlink" title="Limitations of OVN-Based Solutions"></a>Limitations of OVN-Based Solutions</h2><p>OVN-based solutions have two main limitations: the scalability constraints of the centralized control plane and network complexity.</p>
+<h2 id="Centralized-Control-Plane"><a href="#Centralized-Control-Plane" class="headerlink" title="Centralized Control Plane"></a>Centralized Control Plane</h2><p>Although Kube-OVN has been deployed in community cases with thousands of nodes at scale, the centralized control plane architecture of OVN places significant pressure on the control plane, making it a bottleneck for the entire cluster. Especially when control plane nodes experience power loss or failures, it may take a considerable amount of time for the network control plane to recover.</p>
+<p><img src="/en/../images/ovn-limit.png" alt="ovn-limit"></p>
+<p>This issue primarily stems from the centralized control plane architecture of OVN and cannot be entirely avoided. ovn-kubernetes addresses this bottleneck by deploying one OVN control plane per node and interconnecting multiple nodes via OVN-IC. However, this approach also increases architectural complexity and essentially abandons OVN’s inherent cluster networking capabilities, rendering many OVN features unusable.</p>
+<h2 id="Network-Complexity"><a href="#Network-Complexity" class="headerlink" title="Network Complexity"></a>Network Complexity</h2><p>Another issue lies in the inherent complexity of the OVS&#x2F;OVN system. Users need to build a new knowledge system around OVN specifications and flow tables to ensure they can handle practical problems effectively. Since this system often differs from the underlying physical network, it effectively results in two separate network systems. This not only complicates troubleshooting but also necessitates separate teams for physical and container networking, who often struggle to understand each other’s work and collaborate efficiently.</p>
+<p>The above limitations are more about trade-offs in solution selection. If the goal is centralized software control and a container network that is agnostic to the underlying physical network, these limitations are an inevitable consequence.</p>
+<h2 id="EVPN"><a href="#EVPN" class="headerlink" title="EVPN"></a>EVPN</h2><p>Parallel to the purely software-based approach of OVS, there exists another multi-tenancy networking solution in the hardware world: EVPN.</p>
+<p>In the EVPN world, data plane switches encapsulate packets using VXLAN, and traffic from different tenants is isolated by setting the VNI in the VXLAN header.</p>
+<p>Meanwhile, switches synchronize L2&#x2F;L3 routes and VNI information via BGP in the control plane, enabling rapid learning of addresses, routes, and tenant information across the entire network topology.</p>
+<p><img src="/en/../images/evpn.png" alt="EVPN"></p>
+<p>This approach allows large data centers to automate distributed multi-tenancy networking. This solution has already been implemented in many large data centers, and mainstream switches currently support it. So, is there a networking solution in the container space based on this technical architecture? This is where OpenPERouter, which I recently discovered, comes in.</p>
+<h2 id="OpenPERouter"><a href="#OpenPERouter" class="headerlink" title="OpenPERouter"></a>OpenPERouter</h2><p>The core concept of OpenPERouter is to bring the logic of EVPN switches down to the node level. It runs an FRR instance on each machine, establishing BGP and VXLAN tunnels directly with physical switches to seamlessly integrate container networking into the existing EVPN-based physical network architecture.</p>
+<p><img src="/en/../images/openperouter.png"></p>
+<p>Integrating existing container networks with OpenPERouter is not overly complex. For BGP-based CNIs, establishing a BGP peer with OpenPERouter is required. For CNIs based on veth and bridges, the veth on the host side simply needs to be connected to the net namespace where OpenPERouter resides.</p>
+<p>This solution offers several unique advantages:</p>
+<ol>
+<li>It unifies the underlying network and container network, adopting the same EVPN architecture. Although there are differences in specific operations and software usage, the overall approach is largely consistent.</li>
+<li>It achieves Underlay and multi-tenancy—two challenging aspects in container networking—in an extremely lightweight manner. Since the main control and data planes reside at the hardware layer, and container networking only handles access, the CNI layer can theoretically be very lightweight.</li>
+<li>It can transform existing CNIs into multi-tenancy CNIs. Although the project developers haven’t explicitly mentioned this, I see the potential for quickly converting Calico into a multi-tenancy network by simply adding a VNI configuration to Calico’s IPPool.</li>
+</ol>
+<p>Of course, this solution currently has its limitations:</p>
+<ol>
+<li>A unified network means that container networking fully intrudes into the underlying physical network. This requires a unified management team, which could lead to organizational politics in current environments.</li>
+<li>OpenPERouter currently does not handle CNI-related tasks itself but instead attempts to integrate with other networking projects. This may be due to the availability of multiple mainstream solutions. However, from my perspective, integrating with other CNIs could make this otherwise simple EVPN solution more complex than the original, and incompatibilities and conflicts are likely to occur in the future. Building a lightweight CNI specifically designed for EVPN from the ground up would be a more elegant choice.</li>
+</ol>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>In my view, EVPN will be an extremely competitive technical solution for container networking in the future. However, there are currently no mature open-source projects in this area. OpenPERouter is a commendable attempt, and I look forward to seeing a CNI specifically designed for EVPN architecture that can significantly simplify overall network design.</p>
 
       </div>
       
         <div class="prev-or-next">
           <div class="post-foot-next">
             
-              <a href="/en/2025/03/29/deepseek-moe/" target="_self">
+              <a href="/en/2025/08/15/loxilb/" target="_self">
                 <i class="iconfont icon-chevronleft"></i>
                 <span>Prev</span>
               </a>
@@ -275,14 +261,20 @@
                     <i class="iconfont icon-tags mr-10" title="Tags"></i>
                     
                     <span class="span--tag mr-8">
-                      <a href="/en/tags/LLM/" title="LLM">
-                        #LLM
+                      <a href="/en/tags/EVPN/" title="EVPN">
+                        #EVPN
                       </a>
                     </span>
                     
                     <span class="span--tag mr-8">
-                      <a href="/en/tags/Llama/" title="Llama">
-                        #Llama
+                      <a href="/en/tags/Kubernetes/" title="Kubernetes">
+                        #Kubernetes
+                      </a>
+                    </span>
+                    
+                    <span class="span--tag mr-8">
+                      <a href="/en/tags/Network/" title="Network">
+                        #Network
                       </a>
                     </span>
                     
@@ -290,11 +282,6 @@
               
           </div>
           <div class="post-foot-prev">
-            
-              <a href="/en/2025/04/14/deepseek-mla/" target="_self">
-                <span>Next</span>
-                <i class="iconfont icon-chevronright"></i>
-              </a>
             
           </div>
         </div>
@@ -308,7 +295,7 @@
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Model-Basic-Information"><span class="toc-text">Model Basic Information</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Strange-MoE-Architecture"><span class="toc-text">Strange MoE Architecture</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Strange-Cost-Investment"><span class="toc-text">Strange Cost Investment</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Strange-Context-Length"><span class="toc-text">Strange Context Length</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Conclusion"><span class="toc-text">Conclusion</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Limitations-of-OVN-Based-Solutions"><span class="toc-text">Limitations of OVN-Based Solutions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Centralized-Control-Plane"><span class="toc-text">Centralized Control Plane</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Network-Complexity"><span class="toc-text">Network Complexity</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EVPN"><span class="toc-text">EVPN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenPERouter"><span class="toc-text">OpenPERouter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
       
     </div>
   </div>
@@ -678,12 +665,12 @@
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + Chaos%20in%20Llama%204 + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F04%2F06%2Fchaos-llama4%2F + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + OpenPERouter%20--%20Bringing%20EVPN%20to%20Kubernetes + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F11%2F09%2Fevpn-for-kubernetes%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/04/06/chaos-llama4/" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/11/09/evpn-for-kubernetes/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         
