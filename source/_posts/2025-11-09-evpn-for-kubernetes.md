@@ -1,5 +1,5 @@
 ---
-title: OpenPERouter: Bringing EVPN to Kubernetes
+title: OpenPERouter -- Bringing EVPN to Kubernetes
 date: 2025-11-09 04:29:02
 tags:
   - EVPN
