@@ -183,7 +183,7 @@
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-          2025-11-09 04:56:46
+          2025-11-09 13:25:01
         </span>
         
               <span class="post-tags">
@@ -214,10 +214,10 @@
         <p>Currently, the mainstream choices for implementing multi-tenancy in Kubernetes networking within the community are <a target="_blank" rel="noopener" href="https://github.com/kubeovn/kube-ovn">Kube-OVN</a> and <a target="_blank" rel="noopener" href="https://github.com/ovn-kubernetes/ovn-kubernetes">ovn-kubernetes</a>. Essentially, both solutions build an overlay virtual network on top of the physical network using the capabilities of OVS and OVN. This approach is less concerned with the underlying physical network architecture and offers good compatibility. However, the dual-layer network architecture also increases the overall complexity.</p>
 <p>Recently, while researching EVPN as a multi-tenancy solution for physical networks, I discovered the open-source project <a target="_blank" rel="noopener" href="https://github.com/openperouter/openperouter">OpenPERouter</a>. It introduces the concept of EVPN into container networking, providing a new approach to achieving multi-tenancy in Kubernetes. This solution not only unifies software and hardware network architectures but also offers some compatibility with existing CNIs like Calico, which advertise routes via BGP. I can even foresee the potential for Calico to gain multi-tenancy capabilities with minimal effort. Although this project is still in its early stages, I believe it represents a promising direction and could become a competitive option for building large-scale data centers in the future.</p>
 <h2 id="Limitations-of-OVN-Based-Solutions"><a href="#Limitations-of-OVN-Based-Solutions" class="headerlink" title="Limitations of OVN-Based Solutions"></a>Limitations of OVN-Based Solutions</h2><p>OVN-based solutions have two main limitations: the scalability constraints of the centralized control plane and network complexity.</p>
-<h2 id="Centralized-Control-Plane"><a href="#Centralized-Control-Plane" class="headerlink" title="Centralized Control Plane"></a>Centralized Control Plane</h2><p>Although Kube-OVN has been deployed in community cases with thousands of nodes at scale, the centralized control plane architecture of OVN places significant pressure on the control plane, making it a bottleneck for the entire cluster. Especially when control plane nodes experience power loss or failures, it may take a considerable amount of time for the network control plane to recover.</p>
+<h3 id="Centralized-Control-Plane"><a href="#Centralized-Control-Plane" class="headerlink" title="Centralized Control Plane"></a>Centralized Control Plane</h3><p>Although Kube-OVN has been deployed in community cases with thousands of nodes at scale, the centralized control plane architecture of OVN places significant pressure on the control plane, making it a bottleneck for the entire cluster. Especially when control plane nodes experience power loss or failures, it may take a considerable amount of time for the network control plane to recover.</p>
 <p><img src="/en/../images/ovn-limit.png" alt="ovn-limit"></p>
 <p>This issue primarily stems from the centralized control plane architecture of OVN and cannot be entirely avoided. ovn-kubernetes addresses this bottleneck by deploying one OVN control plane per node and interconnecting multiple nodes via OVN-IC. However, this approach also increases architectural complexity and essentially abandons OVN’s inherent cluster networking capabilities, rendering many OVN features unusable.</p>
-<h2 id="Network-Complexity"><a href="#Network-Complexity" class="headerlink" title="Network Complexity"></a>Network Complexity</h2><p>Another issue lies in the inherent complexity of the OVS&#x2F;OVN system. Users need to build a new knowledge system around OVN specifications and flow tables to ensure they can handle practical problems effectively. Since this system often differs from the underlying physical network, it effectively results in two separate network systems. This not only complicates troubleshooting but also necessitates separate teams for physical and container networking, who often struggle to understand each other’s work and collaborate efficiently.</p>
+<h3 id="Network-Complexity"><a href="#Network-Complexity" class="headerlink" title="Network Complexity"></a>Network Complexity</h3><p>Another issue lies in the inherent complexity of the OVS&#x2F;OVN system. Users need to build a new knowledge system around OVN specifications and flow tables to ensure they can handle practical problems effectively. Since this system often differs from the underlying physical network, it effectively results in two separate network systems. This not only complicates troubleshooting but also necessitates separate teams for physical and container networking, who often struggle to understand each other’s work and collaborate efficiently.</p>
 <p>The above limitations are more about trade-offs in solution selection. If the goal is centralized software control and a container network that is agnostic to the underlying physical network, these limitations are an inevitable consequence.</p>
 <h2 id="EVPN"><a href="#EVPN" class="headerlink" title="EVPN"></a>EVPN</h2><p>Parallel to the purely software-based approach of OVS, there exists another multi-tenancy networking solution in the hardware world: EVPN.</p>
 <p>In the EVPN world, data plane switches encapsulate packets using VXLAN, and traffic from different tenants is isolated by setting the VNI in the VXLAN header.</p>
@@ -254,7 +254,7 @@
           <div class="post-attach">
             <span class="post-pubtime">
               <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
-              2025-11-09 04:56:46
+              2025-11-09 13:25:01
             </span>
             
                   <span class="post-tags">
@@ -295,7 +295,7 @@
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Limitations-of-OVN-Based-Solutions"><span class="toc-text">Limitations of OVN-Based Solutions</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Centralized-Control-Plane"><span class="toc-text">Centralized Control Plane</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Network-Complexity"><span class="toc-text">Network Complexity</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EVPN"><span class="toc-text">EVPN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenPERouter"><span class="toc-text">OpenPERouter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Limitations-of-OVN-Based-Solutions"><span class="toc-text">Limitations of OVN-Based Solutions</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Centralized-Control-Plane"><span class="toc-text">Centralized Control Plane</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Network-Complexity"><span class="toc-text">Network Complexity</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EVPN"><span class="toc-text">EVPN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#OpenPERouter"><span class="toc-text">OpenPERouter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
       
     </div>
   </div>
