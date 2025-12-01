@@ -10,11 +10,11 @@
   <meta name="twitter:image" content="https://oilbeater.com/images/oilbeater.png" />
   <meta name="twitter:site" content="Oilbeater&#39;s Study Room" />
   <meta name="twitter:creator" content="Oilbeater">
-  <meta name="twitter:title" content="k8gb: The Best Open Source GSLB Solution for Cloud Native | Oilbeater&#39;s Study Room" />
+  <meta name="twitter:title" content="From NetworkPolicy to ClusterNetworkPolicy | Oilbeater&#39;s Study Room" />
   <meta name="twitter:description" content="" />
 
   <meta property="og:site_name" content="Oilbeater&#39;s Study Room">
-  <meta property="og:title" content="k8gb: The Best Open Source GSLB Solution for Cloud Native | Oilbeater&#39;s Study Room" />
+  <meta property="og:title" content="From NetworkPolicy to ClusterNetworkPolicy | Oilbeater&#39;s Study Room" />
   <meta property="og:type" content="article" />
   <meta property="og:locale" content="en" />
   <meta property="og:description" content="" />
@@ -28,7 +28,7 @@
   
   <title>
     
-      k8gb: The Best Open Source GSLB Solution for Cloud Native 
+      From NetworkPolicy to ClusterNetworkPolicy 
       
       
       |
@@ -179,7 +179,7 @@
   <!-- 文章内容页 url形式：https://yoursite/文章标题/ -->
   <div class="container post-details" id="post-details">
     <div class="post-content">
-      <div class="post-title">k8gb: The Best Open Source GSLB Solution for Cloud Native</div>
+      <div class="post-title">From NetworkPolicy to ClusterNetworkPolicy</div>
       <div class="post-attach">
         <span class="post-pubtime">
           <i class="iconfont icon-updatetime mr-10" title="Update time"></i>
@@ -190,14 +190,14 @@
                 <i class="iconfont icon-tags mr-10" title="Tags"></i>
                 
                 <span class="span--tag mr-8">
-                  <a href="/en/tags/kubernetes/" title="kubernetes">
-                    #kubernetes
+                  <a href="/en/tags/network/" title="network">
+                    #network
                   </a>
                 </span>
                 
                 <span class="span--tag mr-8">
-                  <a href="/en/tags/network/" title="network">
-                    #network
+                  <a href="/en/tags/opensource/" title="opensource">
+                    #opensource
                   </a>
                 </span>
                 
@@ -205,62 +205,54 @@
           
       </div>
       <div class="markdown-body">
-        <p>Balancing traffic across multiple Kubernetes clusters and achieving automatic disaster recovery switching has always been a headache. We have explored public clouds and <a target="_blank" rel="noopener" href="https://github.com/karmada-io/multi-cluster-ingress-nginx">Karmada Ingress</a>, and have also tried manual DNS solutions, but these approaches often fell short in terms of cost, universality, flexibility, and automation. It was not until we discovered <a target="_blank" rel="noopener" href="https://www.k8gb.io/">k8gb</a>, a project initiated by South Africa’s Absa Group to provide banking-level multi-availability, that we realized the ingenuity of using various DNS protocols to deliver a universal and highly automated GSLB solution. This blog will briefly discuss the problems with other approaches and how k8gb cleverly uses DNS to implement GSLB.</p>
-<h2 id="What-is-GSLB"><a href="#What-is-GSLB" class="headerlink" title="What is GSLB"></a>What is GSLB</h2><p>GSLB (Global Service Load Balancer) is a concept in contrast to single-cluster load balancing, which mainly serves as an entrance to a cluster to distribute traffic within the cluster, whereas GSLB typically acts as an entrance for traffic across multiple clusters, handling load balancing and fault management. On one hand, GSLB can set geographic affinity rules to route traffic closer to users, enhancing overall performance; on the other hand, it can automatically redirect traffic to a functioning cluster when one fails, minimizing the impact on users.</p>
-<h2 id="Problems-with-Other-Solutions"><a href="#Problems-with-Other-Solutions" class="headerlink" title="Problems with Other Solutions"></a>Problems with Other Solutions</h2><h3 id="Commercial-Load-Balancers"><a href="#Commercial-Load-Balancers" class="headerlink" title="Commercial Load Balancers"></a>Commercial Load Balancers</h3><p>GSLB is not a new concept, so many commercial companies have mature products, such as <a target="_blank" rel="noopener" href="https://www.f5.com/solutions/use-cases/global-server-load-balancing-gslb">F5 GSLB</a>. These products generally have the following drawbacks:</p>
-<ol>
-<li>They do not integrate well with cloud-native systems, often requiring deployment outside Kubernetes clusters, which complicates unified management.</li>
-<li>They are costly and pose risks of vendor lock-in.</li>
-</ol>
-<h3 id="Public-Cloud-Global-Load-Balancers"><a href="#Public-Cloud-Global-Load-Balancers" class="headerlink" title="Public Cloud Global Load Balancers"></a>Public Cloud Global Load Balancers</h3><p>Public clouds offer multi-cluster load balancing products to solve the issue of traffic distribution across multiple regions, such as AWS’s <a target="_blank" rel="noopener" href="https://aws.amazon.com/global-accelerator/">Global Accelerator</a> and GCP’s <a target="_blank" rel="noopener" href="https://cloud.google.com/load-balancing/docs/https">External Application Load Balancer</a>. GCP even offers custom <a target="_blank" rel="noopener" href="https://cloud.google.com/kubernetes-engine/docs/concepts/multi-cluster-ingress">Multi Cluster Ingress</a> resources that integrate well with Kubernetes Ingress. However, they also have several problems:</p>
-<ol>
-<li>Although they support multi-cluster load balancing, all clusters must be within the same public cloud, preventing inter-cloud traffic scheduling.</li>
-<li>They are not usable in private clouds.</li>
-</ol>
-<h3 id="Karmada-Multi-Cluster-Ingress"><a href="#Karmada-Multi-Cluster-Ingress" class="headerlink" title="Karmada Multi Cluster Ingress"></a>Karmada Multi Cluster Ingress</h3><p>Karmada is a multi-cluster orchestration tool that also provides its own multi-cluster traffic routing solution through <a target="_blank" rel="noopener" href="https://karmada.io/docs/userguide/service/multi-cluster-ingress/">Karmada Multi Cluster Ingress</a>. This solution involves deploying an ingress-nginx provided by the Karmada community and defining <code>MultiClusterIngress</code> within a cluster, but it has several issues:</p>
-<ol>
-<li>It relies on inter-cluster container network connectivity and CRDs like ServiceImporter and ServiceExporter, which have high requirements.</li>
-<li>It requires additional management of the ingress-nginx instance that provides GSLB services, including its deployment location, quantity, and distribution, which are operational considerations.</li>
-<li>The <a target="_blank" rel="noopener" href="https://github.com/karmada-io/multi-cluster-ingress-nginx">multi-cluster-ingress-nginx</a> modified by the community has had little code submission in recent years, raising concerns about its reliability.</li>
-</ol>
-<h3 id="Simple-DNS-Approach"><a href="#Simple-DNS-Approach" class="headerlink" title="Simple DNS Approach"></a>Simple DNS Approach</h3><p>A simple, manually configured DNS-based solution can work initially. Most DNS providers offer health check features, allowing us to add multiple cluster exit IP addresses to DNS records and configure health checks for fault switching. However, this simple approach has clear limitations as it scales:</p>
-<ol>
-<li>It lacks good automation; a single cluster might have multiple domain names and Ingress IP combinations, and manually managing their mappings becomes increasingly challenging with scale.</li>
-<li>DNS providers’ health checks are typically based on TCP and ICMP, so they can detect and switch during complete cluster outages. However, partial failures are undetectable, e.g., when multiple Ingresses share an ingress-controller and route traffic by domain name. If the backend instances of one service fail, but other services on the ingress-controller operate normally, the health check will still pass, preventing traffic from being redirected to another cluster.</li>
-<li>DNS inherently involves caching at various levels, which can delay updates.</li>
-<li>DNS health checks are a capability provided by the vendor and are not guaranteed to be available from all vendors, especially in private cloud scenarios.</li>
-</ol>
-<h2 id="k8gb’s-Solution"><a href="#k8gb’s-Solution" class="headerlink" title="k8gb’s Solution"></a>k8gb’s Solution</h2><p>k8gb’s solution also utilizes DNS but addresses the deficiencies of the simple DNS approach through a series</p>
-<p> of clever designs.</p>
-<p>The essence of the simple DNS approach’s problem is that it does not integrate well with Kubernetes. Dynamic information within Kubernetes, such as new Ingress additions, new domain names, and service health status, cannot be effectively synced to upstream DNS servers. Upstream DNS servers’ simple health checks are also inadequate for handling the complex changes within Kubernetes. Thus, a core change in k8gb is that the upstream DNS records are no longer A or AAAA records pointing to a cluster’s exit address but are forwarded to a CoreDNS configured within the cluster for DNS resolution, pushing the complex DNS logic down into the cluster for internal control. In this way, the upstream DNS only needs to serve as a simple proxy without needing to configure health checks or dynamically adjust multiple address mappings.</p>
-<p>The user’s DNS request process is illustrated below:</p>
+        <p><a target="_blank" rel="noopener" href="https://kubernetes.io/docs/concepts/services-networking/network-policies/">NetworkPolicy</a>, as an early Kubernetes API, may seem promising, but in practice, it proves to be limited in functionality, difficult to extend, understand, and use. Therefore, Kubernetes established the <a target="_blank" rel="noopener" href="https://network-policy-api.sigs.k8s.io/">Network Policy API Working Group</a> to develop the next-generation API specification. <a target="_blank" rel="noopener" href="https://network-policy-api.sigs.k8s.io/api-overview/#the-clusternetworkpolicy-resource">ClusterNetworkPolicy</a> is the latest outcome of these discussions and may become the new standard in the future.</p>
+<h2 id="Limitations-of-NetworkPolicy"><a href="#Limitations-of-NetworkPolicy" class="headerlink" title="Limitations of NetworkPolicy"></a>Limitations of NetworkPolicy</h2><p>NetworkPolicy is a Namespace-scoped resource, essentially representing an “application-centric” policy. It selects a group of Pods using <code>podSelector</code> and <code>namespaceSelector</code>, then restricts their Ingress and Egress traffic. This leads to several practical issues:</p>
+<h3 id="Lack-of-Cluster-Level-Control"><a href="#Lack-of-Cluster-Level-Control" class="headerlink" title="Lack of Cluster-Level Control"></a>Lack of Cluster-Level Control</h3><p>Since the policy scope is limited to a Namespace, cluster administrators cannot define cluster-wide default network policies. Instead, they must create identical policies in every Namespace. This approach has drawbacks: updating a policy requires modifications across all Namespace resources, and it can easily conflict with network policies created by developers. Policies set by administrators can be easily bypassed by new policies from the application side.</p>
+<p>The root cause is the conflict between the application-centric perspective of NetworkPolicy and the cluster-centric perspective of administrators. NetworkPolicy becomes difficult to apply when the user’s security model is not application-centric, yet managing overall cluster security policies is a common real-world scenario for administrators.</p>
+<h3 id="Unclear-Semantics"><a href="#Unclear-Semantics" class="headerlink" title="Unclear Semantics"></a>Unclear Semantics</h3><p>NetworkPolicy semantics have several “pitfalls” that both newcomers and operators often encounter:</p>
 <ul>
-<li><img src="https://www.k8gb.io/docs/images/gslb-basic-multi-cluster.svg" alt="K8GB multi-cluster interoperability"></li>
+<li><p><strong>Implicit Isolation</strong><br>Once any NetworkPolicy selects a Pod, traffic that is “not explicitly allowed” is implicitly denied. This implicit behavior requires mental deduction and is hard to understand at a glance.</p>
+</li>
+<li><p><strong>Only Allow, No Explicit Deny</strong><br>Standard NetworkPolicy only supports <code>allow</code>-type rules. To “deny a specific source,” one typically has to indirectly achieve it by adding other <code>allow</code> rules or rely on vendor-specific extensions provided by certain CNI implementations.</p>
+</li>
+<li><p><strong>No Priority</strong><br>When multiple NetworkPolicies select the same set of Pods, their rules are additive rather than overriding. The final behavior often requires examining all policies together, making troubleshooting extremely difficult.</p>
+</li>
 </ul>
-<ol>
-<li>The user requests a domain name’s IP record from an external DNS provider.</li>
-<li>The external DNS forwards this request to a CoreDNS managed by k8gb within the cluster.</li>
-<li>k8gb analyzes available Ingress IPs based on the Ingress Spec’s domain name, the Ingress Status’s Ingress IP, and the health status of backend pods within the cluster, as well as load balancing policies, and returns a usable Ingress IP to the user.</li>
-<li>The user can then directly access the corresponding Ingress Controller via this IP.</li>
-<li>If a k8gb-managed CoreDNS in one cluster fails, since the upstream DNS concurrently proxies DNS requests to multiple clusters, another cluster can also return its Ingress IP, allowing the user to choose from multiple available IPs.</li>
-</ol>
-<p>This method requires administrators to register several domain name suffixes with the upstream DNS and proxy them to each cluster’s CoreDNS. k8gb also provides automation capabilities; once certificates are properly configured, it can automatically analyze the domain names used in Ingress and automatically register them with the upstream DNS, significantly simplifying administrators’ tasks.</p>
-<p>Another important aspect to note is that each cluster’s CoreDNS must not only record its Ingress IPs but also those of other clusters for the same Ingress. If a cluster’s corresponding service’s pods are Not Ready, CoreDNS will return NXDomain. If the client receives this response, it will treat it as if the domain cannot be resolved, even though another cluster’s service might still be operational. Therefore, k8gb must also sync all clusters’ Ingress IPs for the same domain name and their health status.</p>
-<p>As is well known, syncing data across multiple clusters is a global challenge, but k8gb cleverly achieves data syncing through DNS.</p>
-<p>The syncing process is illustrated below:</p>
-<p><img src="https://www.k8gb.io/docs/images/k8gb-multi-cluster-interoperabililty.svg" alt="k8gb multi-cluster interoperability"></p>
-<p>The general idea is that each cluster’s k8gb registers its CoreDNS’s Ingress IP with the upstream CoreDNS, allowing each cluster to directly access another cluster’s CoreDNS. Then, each cluster’s CoreDNS maintains its own <code>localtargets-app.cloud.example.com</code> Ingress IP and health status for <code>app.cloud.example.com</code>, allowing each cluster to obtain other clusters’ Ingress IPs for the same domain name and include them in their return results, achieving multi-cluster domain name resolution syncing.</p>
-<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>k8gb, as an open-source GSLB, achieves seamless integration with Kubernetes, enabling effective cross-cluster domain name and traffic management with minimal external dependencies—only requiring an API to add DNS records. Although this project is not yet widely popular, it is already the best solution in this field in my view.</p>
-<blockquote>
-<p>This post was originally written in Chinese and I translated it to English with the help of GPT4. If you find any errors, please feel free to let me know.</p>
-</blockquote>
+<p>These characteristics combined make NetworkPolicy challenging to understand and even more challenging to debug.</p>
+<h2 id="The-ClusterNetworkPolicy-Solution"><a href="#The-ClusterNetworkPolicy-Solution" class="headerlink" title="The ClusterNetworkPolicy Solution"></a>The ClusterNetworkPolicy Solution</h2><p>To address the inherent issues of NetworkPolicy, the Network Policy API Working Group proposed a new API—ClusterNetworkPolicy (CNP). Its goal is to provide cluster administrators with clearer and more powerful network control capabilities without breaking existing NetworkPolicy usage.</p>
+<p>The core idea is to introduce policy layering. Independent policy tiers are added before and after the existing NetworkPolicy layer, separating cluster administrator policies from application policies. This provides richer perspectives and more flexible usage.</p>
+<p><img src="/en/../images/20251201104247.png"></p>
+<p>An example is as follows:</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">policy.networking.k8s.io/v1alpha2</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterNetworkPolicy</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">sensitive-ns-deny-from-others</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">tier:</span> <span class="string">Admin</span></span><br><span class="line">  <span class="attr">priority:</span> <span class="number">10</span></span><br><span class="line">  <span class="attr">subject:</span></span><br><span class="line">    <span class="attr">namespaces:</span></span><br><span class="line">      <span class="attr">matchLabels:</span></span><br><span class="line">        <span class="attr">kubernetes.io/metadata.name:</span> <span class="string">sensitive-ns</span></span><br><span class="line">  <span class="attr">ingress:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">action:</span> <span class="string">Deny</span></span><br><span class="line">      <span class="attr">from:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">namespaces:</span></span><br><span class="line">            <span class="attr">matchLabels:</span> &#123;&#125; </span><br><span class="line">      <span class="attr">name:</span> <span class="string">deny-all-from-other-namespaces</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="Cluster-Administrator-Perspective"><a href="#Cluster-Administrator-Perspective" class="headerlink" title="Cluster Administrator Perspective"></a>Cluster Administrator Perspective</h3><p>The newly introduced ClusterNetworkPolicy is a cluster-scoped resource. Administrators can directly select Pods across multiple Namespaces for policy control. Additionally, policies in the <code>Admin</code> tier can take effect before NetworkPolicies, allowing cluster administrators to control critical cluster-wide behaviors with just a few <code>Admin</code> tier policies.</p>
+<p>Policies in the <code>Baseline</code> tier are executed after all NetworkPolicies have been evaluated, serving as a fallback policy.</p>
+<p>In simple terms:</p>
+<ul>
+<li>Policies with <code>tier: Admin</code> define what <strong>must absolutely not be done</strong>.</li>
+<li>Policies with <code>tier: Baseline</code> define what is <strong>not recommended by default</strong>, which users can override using NetworkPolicies.</li>
+</ul>
+<h3 id="Explicit-Priority"><a href="#Explicit-Priority" class="headerlink" title="Explicit Priority"></a>Explicit Priority</h3><p>ClusterNetworkPolicy introduces a new <code>priority</code> field. When multiple rules within the same tier have overlapping scopes, priority clearly determines which rule should take effect. This eliminates the implicit overriding behavior seen in NetworkPolicy, where rules had to be guessed and inferred.</p>
+<h3 id="Clear-Action-Semantics-Accept-Deny-Pass"><a href="#Clear-Action-Semantics-Accept-Deny-Pass" class="headerlink" title="Clear Action Semantics: Accept &#x2F; Deny &#x2F; Pass"></a>Clear Action Semantics: Accept &#x2F; Deny &#x2F; Pass</h3><p>Unlike NetworkPolicy, which only has an “allow” semantic, each rule in ClusterNetworkPolicy has an explicit <code>action</code> field with possible values:</p>
+<ul>
+<li><code>Accept</code>: Allows traffic selected by this rule and stops further policy evaluation.</li>
+<li><code>Deny</code>: Denies traffic selected by this rule and stops further policy evaluation.</li>
+<li><code>Pass</code>: Skips subsequent ClusterNetworkPolicies in the current tier and passes evaluation to the next layer.</li>
+</ul>
+<p>The documentation emphasizes:</p>
+<ul>
+<li>ClusterNetworkPolicy no longer has the “implicit isolation” effect of NetworkPolicy.</li>
+<li>All behavior stems from the rules you write; what you see in the policy is exactly what you get.</li>
+</ul>
+<p>Combined with priority configuration, rule interpretation no longer leads to ambiguity, making understanding significantly less difficult.</p>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>ClusterNetworkPolicy, to some extent, returns to the traditional layered network policy architecture. It addresses the issues of NetworkPolicy without introducing disruptive changes, making it a well-designed solution. We look forward to seeing this specification mature and be widely adopted soon.</p>
 
       </div>
       
         <div class="prev-or-next">
           <div class="post-foot-next">
             
-              <a href="/en/2024/03/21/ai-content-to-logseq/" target="_self">
+              <a href="/en/2025/11/09/evpn-for-kubernetes/" target="_self">
                 <i class="iconfont icon-chevronleft"></i>
                 <span>Prev</span>
               </a>
@@ -276,14 +268,14 @@
                     <i class="iconfont icon-tags mr-10" title="Tags"></i>
                     
                     <span class="span--tag mr-8">
-                      <a href="/en/tags/kubernetes/" title="kubernetes">
-                        #kubernetes
+                      <a href="/en/tags/network/" title="network">
+                        #network
                       </a>
                     </span>
                     
                     <span class="span--tag mr-8">
-                      <a href="/en/tags/network/" title="network">
-                        #network
+                      <a href="/en/tags/opensource/" title="opensource">
+                        #opensource
                       </a>
                     </span>
                     
@@ -291,11 +283,6 @@
               
           </div>
           <div class="post-foot-prev">
-            
-              <a href="/en/2024/05/24/five-kubernetes-multicluster-network/" target="_self">
-                <span>Next</span>
-                <i class="iconfont icon-chevronright"></i>
-              </a>
             
           </div>
         </div>
@@ -309,7 +296,7 @@
     <div class="title">Contents</div>
     <div class="catalog-content">
       
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#What-is-GSLB"><span class="toc-text">What is GSLB</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Problems-with-Other-Solutions"><span class="toc-text">Problems with Other Solutions</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Commercial-Load-Balancers"><span class="toc-text">Commercial Load Balancers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Public-Cloud-Global-Load-Balancers"><span class="toc-text">Public Cloud Global Load Balancers</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Karmada-Multi-Cluster-Ingress"><span class="toc-text">Karmada Multi Cluster Ingress</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Simple-DNS-Approach"><span class="toc-text">Simple DNS Approach</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#k8gb%E2%80%99s-Solution"><span class="toc-text">k8gb’s Solution</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Limitations-of-NetworkPolicy"><span class="toc-text">Limitations of NetworkPolicy</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Lack-of-Cluster-Level-Control"><span class="toc-text">Lack of Cluster-Level Control</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unclear-Semantics"><span class="toc-text">Unclear Semantics</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#The-ClusterNetworkPolicy-Solution"><span class="toc-text">The ClusterNetworkPolicy Solution</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Cluster-Administrator-Perspective"><span class="toc-text">Cluster Administrator Perspective</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Explicit-Priority"><span class="toc-text">Explicit Priority</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Clear-Action-Semantics-Accept-Deny-Pass"><span class="toc-text">Clear Action Semantics: Accept &#x2F; Deny &#x2F; Pass</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Summary"><span class="toc-text">Summary</span></a></li></ol>
       
     </div>
   </div>
@@ -679,12 +666,12 @@
       </a>
       <div class="share-content hidden">
         
-          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + k8gb%3A%20The%20Best%20Open%20Source%20GSLB%20Solution%20for%20Cloud%20Native + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2024%2F04%2F18%2Fk8gb-best-cloudnative-gslb%2F + '" target="_blank" title="Twitter">
+          <a class="share-item" href="https://twitter.com/intent/tweet?text=' + From%20NetworkPolicy%20to%20ClusterNetworkPolicy + '&url=' + http%3A%2F%2Foilbeater.com%2Fen%2F2025%2F11%2F30%2Fnetworkpolicy-to-clusternetworkpolicy%2F + '" target="_blank" title="Twitter">
             <i class="iconfont icon-twitter"></i>
           </a>
         
         
-          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2024/04/18/k8gb-best-cloudnative-gslb/" target="_blank" title="Facebook">
+          <a class="share-item" href="https://www.facebook.com/sharer.php?u=http://oilbeater.com/en/2025/11/30/networkpolicy-to-clusternetworkpolicy/" target="_blank" title="Facebook">
             <i class="iconfont icon-facebooksquare"></i>
           </a>
         
